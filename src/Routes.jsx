@@ -11,7 +11,7 @@ import ModalPopup from "./sitelayout/ModalPopup";
 import Overlay from "./sitelayout/Overlay";
 import { ToastProvider } from "react-native-sprinkle-toast";
 import LoginCommon from "./screens/LoginCommon";
-import Home from "./screens/Home";
+import Vanamahotsav from "./screens/Home";
 
 
 const Stack = createNativeStackNavigator();
@@ -39,7 +39,7 @@ export default function Routes() {
                       currentScreenName="HOME"
                       scrollEnabled={false}
                     >
-                      <Home{...props} />
+                      <Vanamahotsav{...props} />
                     </SiteLayout>
                   </SessionChecking>
                 )}

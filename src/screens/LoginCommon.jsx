@@ -163,7 +163,7 @@ const LoginCommon = () => {
   return (
     <View style={styles.screen}>
       <ImageBackground 
-source={require('../../assets/MARINEBG.png')}
+source={require('../../assets/image.png')}
   style={styles.screen}
   contentFit="cover"
 >

@@ -320,7 +320,7 @@ const SiteLayout = ({
           {/* Sidebar Header */}
           <View style={styles.sidebarHeader}>
             <Image source={labour_logo} style={styles.sidebarLogo} />
-            <Text style={styles.sidebarHeaderTitle}>APEMCL</Text>
+            <Text style={styles.sidebarHeaderTitle}>Haritha Andhra</Text>
             <TouchableOpacity
               style={styles.sidebarCloseBtn}
               onPress={() => setSidebarVisible(false)}
@@ -391,16 +391,16 @@ const SiteLayout = ({
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={toggleSidebar}>
+            {/* <TouchableOpacity onPress={toggleSidebar}>
               <Ionicons name="menu" size={28} color="#fff" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             {/* <Image
               source={labour_logo}
               style={styles.logo}
               resizeMode="contain"
             /> */}
             <View>
-              <Text style={styles.headerTitle}>APEMCL</Text>
+              <Text style={styles.headerTitle}>Haritha Andhra</Text>
               {/* <Text style={styles.headerSubTitle}>
                 APEMCL, Govt. of A.P
               </Text> */}

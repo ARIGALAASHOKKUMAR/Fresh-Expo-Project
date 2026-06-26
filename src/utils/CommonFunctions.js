@@ -17,10 +17,14 @@ import { FontAwesome } from "@expo/vector-icons";
 
 import {
   commonAPICall,
+  FIRE_TRUTHING,
   GENERATE_CAPTCHA,
   LOGOUT_END_POINT,
   MANDALSNEW,
   myAxios,
+  NEWMANDALS,
+  NEWVILLAGES,
+  SPECIES,
   SUBMIT_FEEDBACK,
   VILLAGESNEW,
 } from "./utils";
@@ -32,6 +36,7 @@ import {
   logOut,
   showLoader,
 } from "../actions";
+import { showErrorToastBottom } from "./showToast";
 // At the bottom of the file:
 // import { NEWMANDALS, NEWVILLAGES } from "./utils/utils";
 
@@ -178,6 +183,31 @@ dispatch(hideLoader());
     }
   }
 };
+
+export const NewVillages = async (e, setVillage, dispatch, districtCode) => {
+  dispatch(showLoader());
+  try {
+    if (!e) {
+      setVillage([]);
+      dispatch(hideLoader());
+      return;
+    }
+
+    const response = await myAxios.get(
+      NEWVILLAGES + "distCode=" + districtCode + "&mandalCode=" + e,
+    );
+    if (response.data) {
+      setVillage(response.data.Villages);
+    } else {
+      setVillage([]);
+    }
+  } catch (error) {
+    toast.error(error.response.data.message);
+  }
+
+  dispatch(hideLoader());
+};
+
 
 export const LogoutListener = () => {
   // BroadcastChannel is browser-specific.
@@ -404,6 +434,40 @@ export const Districts = [
   { dist_code: 747, dist_name: "DR.B.R.AMBEDKAR KONASEEMA" },
   { dist_code: 504, dist_name: "Y.S.R." },
 ];
+
+export const GetSpecies = async (setSpecies, dispatch) => {
+  dispatch(showLoader());
+  try {
+    const response = await myAxios.get(SPECIES);
+    if (response.data.status === "success") {
+      setSpecies(response.data.nurseryspecies_details);
+    } else {
+      setSpecies([]);
+    }
+  } catch (error) {
+    toast.error(error.response.data.message);
+  }
+
+  dispatch(hideLoader());
+};
+
+export const GetNewMandals = async (e, setMandal, setVillage, dispatch) => {
+  
+  
+    if (!e) {
+      setMandal([]);
+      setVillage([]);
+      dispatch(hideLoader());
+      return;
+    }
+    const response = await commonAPICall(NEWMANDALS + "zoneCode=" + e,{},"get",dispatch);
+    if (response.data) {
+      setMandal(response.data.Regions);
+      setVillage([]);
+    } else {
+      setMandal({});
+    }
+};
 
 export const GetMandals = async (code, setMandals) => {
   try {
@@ -682,6 +746,101 @@ export const dists28 =  [
 		"dist_name" : "POLAVARAM"
 	}
 ]
+
+export const new_dist = [
+  { dist_code: "", dist_name: "--select--" },
+  { dist_code: 749, dist_name: "NTR" },
+  { dist_code: 505, dist_name: "EAST GODAVARI" },
+  { dist_code: 503, dist_name: "CHITTOOR" },
+  { dist_code: 506, dist_name: "GUNTUR" },
+  { dist_code: 748, dist_name: "ELURU" },
+  { dist_code: 746, dist_name: "KAKINADA" },
+  { dist_code: 523, dist_name: "WEST GODAVARI" },
+  { dist_code: 521, dist_name: "VIZIANAGARAM" },
+  { dist_code: 502, dist_name: "ANANTAPUR" },
+  { dist_code: 753, dist_name: "ANNAMAYYA" },
+  { dist_code: 750, dist_name: "BAPATLA" },
+  { dist_code: 517, dist_name: "PRAKASAM" },
+  { dist_code: 744, dist_name: "ANAKAPALLI" },
+  { dist_code: 511, dist_name: "KURNOOL" },
+  { dist_code: 752, dist_name: "TIRUPATI" },
+  { dist_code: 519, dist_name: "SRIKAKULAM" },
+  { dist_code: 510, dist_name: "KRISHNA" },
+  { dist_code: 755, dist_name: "NANDYAL" },
+  { dist_code: 751, dist_name: "PALNADU" },
+  { dist_code: 515, dist_name: "SPSR NELLORE" },
+  { dist_code: 520, dist_name: "VISAKHAPATANAM" },
+  { dist_code: 754, dist_name: "SRI SATHYA SAI" },
+  { dist_code: 743, dist_name: "PARVATHIPURAM MANYAM" },
+  { dist_code: 745, dist_name: "ALLURI SITHARAMA RAJU" },
+  { dist_code: 747, dist_name: "DR.B.R.AMBEDKAR KONASEEMA" },
+  { dist_code: 504, dist_name: "Y.S.R.Kadapa" },
+];
+
+export const GetBeat = async (
+  e,
+  setBeat,
+  setCompartment,
+  setBlock,
+  dispatch,
+) => {
+  
+    if (!e) {
+      setBeat([]);
+      setCompartment([]);
+      setBlock([]);
+      dispatch(hideLoader());
+      return;
+    }
+    const response = await commonAPICall(FIRE_TRUTHING + "getbeatdata?secId=" + e,{},"get",dispatch);
+
+    if (response.data.status === true) {
+      setBeat(response.data.MonthWiseBeatData);
+
+      setCompartment([]);
+      setBlock([]);
+    } else {
+      setBeat([]);
+    }
+  
+};
+
+export const GetCompartment = async (e, setCompartment, setBlock, dispatch) => {
+    if (!e) {
+      setCompartment([]);
+      setBlock([]);
+      dispatch(hideLoader());
+      return;
+    }
+
+    const response = await commonAPICall(
+      FIRE_TRUTHING + "getcompartmentdata?beatId=" + e,{},"get",dispatch
+    );
+    if (response.data.status === true) {
+      setCompartment(response.data.MonthWiseCompartmentData);
+      setBlock([]);
+    } else {
+      setBlock([]);
+    }
+  
+};
+
+export const GetBlock = async (e, setBlock, dispatch, beatid) => {
+  
+    if (!e) {
+      setBlock([]);
+      dispatch(hideLoader());
+      return;
+    }
+    const response = await commonAPICall(
+      FIRE_TRUTHING + "getblockdata?compartmentId=" + e + "&beatId=" + beatid,{},"get",dispatch
+    );
+    if (response.data.status === true) {
+      setBlock(response.data.MonthWiseBlockData);
+    } else {
+      setBlock([]);
+    }
+};
 
 
 

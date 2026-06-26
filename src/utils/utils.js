@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import { hideLoader, hideMessage, showLoader, showMessage } from "../actions";
 import { Toast } from "react-native-sprinkle-toast";
 
-export const base_url = "https://swapi.dev.nidhi.apcfss.in/apemcl";
+export const base_url = "https://swapi.dev.nidhi.apcfss.in/apsawmills";
 export const IMG_UPLOAD_URL =
   "https://swapi.dev.nidhi.apcfss.in/socialwelfaredms/user-defined-path/file-upload/";
 export const IMG_DOWNLOAD_URL =
@@ -137,6 +137,8 @@ const showNativeMessage = (msg, type) => {
   }
 };
 
+export const SPECIES = "api/user/nurseryspecies";
+
 export const CONTEXT_NAME = "APEMCL";
 export const CONTEXT_HEADING = "APEMCL";
 export const BASE_SERVER_URL = "https://forests.ap.gov.in/uploads/";
@@ -222,5 +224,16 @@ export const VALIDATEQRINLAB = "api/user/validateSampleQr?qrCode="
 
 export const APPROVEREJECTSEE = "api/user/startReadingEditRequestApprovalAction"
 export const GUARDPONDSGET="api/user/guard-pond-details"
+export const NEWMANDALS = "api/open/regions?";
+export const NEWVILLAGES = "api/open/villages?";
+export const VanamahotsavamEntry = "api/user/createVanamahotsavamEntry";
+export const VanamahotsavamReg = "api/open/createVanamahotsavamReg";
+export const VANAMAHOTSAVGET = "api/user/retrieveRegMahotsav";
+export const VANAMAHOTSAVVERIFY = "api/user/vanamohatsavoverallregdata?";
+export const VANAMAHOTSAVUPDATE = "api/user/approveVanamahotsavamEntry";
+export const VANASECTIONS = "api/user/sections";
+export const SCHEMES = "api/user/plantationSchemes";
+export const FIRE_TRUTHING = "api/user/";
+
 
 
