@@ -9,15 +9,12 @@ import {
   Alert,
   ActivityIndicator,
   Image,
-  Modal,
-  FlatList,
   Platform,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import moment from 'moment';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -27,7 +24,7 @@ import {
   VanamahotsavamEntry,
   VANASECTIONS,
 } from '../utils/utils';
-import ImageBucketRN from '../utils/ImageBucketRN';
+import ImageBucketRN, { getLocation } from '../utils/ImageBucketRN';
 import { GetSpecies, GetNewMandals, new_dist, NewVillages, GetBeat, GetCompartment, GetBlock } from '../utils/CommonFunctions';
 
 const Vanamahotsav = () => {
@@ -47,7 +44,7 @@ const Vanamahotsav = () => {
   const [beat, setBeat] = useState([]);
   const [compartment, setCompartment] = useState([]);
   const [block, setBlock] = useState([]);
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [currentImageIndex, setCurrentImageIndex] = useState(null);
 
   // Determine location type based on roleId
   // roleId 11 = Forest, others = Non-Forest
@@ -120,18 +117,6 @@ const Vanamahotsav = () => {
     }),
   });
 
-  // Get location
-  const getLocation = async (fieldName) => {
-    try {
-      // You can implement actual location fetching here
-      // For now, using a mock location
-      const mockLocation = '17.1234, 78.5678';
-      formik.setFieldValue(fieldName, mockLocation);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to get location');
-    }
-  };
-
   // Get Sections
   const GetSections = async () => {
     try {
@@ -201,48 +186,7 @@ const Vanamahotsav = () => {
     },
     validationSchema: validationSchema,
     onSubmit: HandleSubmit,
-    validateOnChange: true,
-    validateOnBlur: true,
   });
-
-  // Handle field validation on blur - only validate the field being blurred
-  const handleFieldBlur = (fieldName) => {
-    formik.setFieldTouched(fieldName, true);
-    
-    // Validate only the specific field
-    try {
-      Yup.reach(validationSchema, fieldName)
-        .validate(formik.values[fieldName])
-        .then(() => {
-          // Field is valid, clear error for this field
-          setFieldErrors(prev => ({ ...prev, [fieldName]: undefined }));
-        })
-        .catch((err) => {
-          // Field is invalid, set error for this field
-          setFieldErrors(prev => ({ ...prev, [fieldName]: err.message }));
-        });
-    } catch (error) {
-      // Field might not exist in schema or is nested
-      if (fieldName.includes('.')) {
-        // Handle nested fields
-        const [parent, child] = fieldName.split('.');
-        if (parent === 'speciesDetails') {
-          try {
-            Yup.reach(validationSchema, `speciesDetails.${child}`)
-              .validate(formik.values.speciesDetails[child])
-              .then(() => {
-                setFieldErrors(prev => ({ ...prev, [fieldName]: undefined }));
-              })
-              .catch((err) => {
-                setFieldErrors(prev => ({ ...prev, [fieldName]: err.message }));
-              });
-          } catch (e) {
-            // Field not in schema
-          }
-        }
-      }
-    }
-  };
 
   const HandleSubmit = async (values) => {
     try {
@@ -276,8 +220,6 @@ const Vanamahotsav = () => {
     setTempDate(currentDate);
     const formattedDate = currentDate.toISOString().split('T')[0];
     formik.setFieldValue('plantationDate', formattedDate);
-    // Validate the date field
-    handleFieldBlur('plantationDate');
   };
 
   // Add Image Field
@@ -302,47 +244,34 @@ const Vanamahotsav = () => {
     formik.setFieldValue('speciesDetails.speciesImages', newImages);
   };
 
-  // Get error message for a field
-  const getFieldError = (fieldName) => {
-    // Check if field is touched and has error
-    const path = fieldName.split('.');
-    let touched = formik.touched;
-    let error = formik.errors;
+  // Handle image capture with location
+  const handleImageCapture = async (index) => {
+    const path = 'APFD/VANAMAHOTSAV/';
+    const imageFieldName = `speciesDetails.speciesImages[${index}].image`;
+    const locationFieldName = `speciesDetails.speciesImages[${index}].imageLocation`;
     
-    for (let key of path) {
-      if (touched && touched[key] !== undefined) {
-        touched = touched[key];
-      } else {
-        touched = undefined;
+    // Store current index for location update
+    setCurrentImageIndex(index);
+    
+    // Capture image using ImageBucketRN
+    await ImageBucketRN(
+      formik,
+      path,
+      imageFieldName,
+      20971520,
+      'camera',
+      dispatch
+    );
+    
+    // Get location after image capture
+    try {
+      const locationData = await getLocation(formik);
+      if (locationData) {
+        formik.setFieldValue(locationFieldName, locationData);
       }
-      if (error && error[key] !== undefined) {
-        error = error[key];
-      } else {
-        error = undefined;
-      }
+    } catch (error) {
+      console.log('Error getting location:', error);
     }
-    
-    // Also check for specific field validation errors
-    if (fieldErrors[fieldName]) {
-      return fieldErrors[fieldName];
-    }
-    
-    return touched && error ? error : undefined;
-  };
-
-  // Get touched status for a field
-  const isFieldTouched = (fieldName) => {
-    const path = fieldName.split('.');
-    let touched = formik.touched;
-    
-    for (let key of path) {
-      if (touched && touched[key] !== undefined) {
-        touched = touched[key];
-      } else {
-        return false;
-      }
-    }
-    return touched !== undefined;
   };
 
   // Render Images with Add/Remove functionality
@@ -370,7 +299,7 @@ const Vanamahotsav = () => {
                     style={styles.removeImageButton}
                     onPress={() => removeImageField(index)}
                   >
-                    <Icon name="close-circle" size={24} color="#dc3545" />
+                    <Text style={styles.removeIcon}>❌</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -378,44 +307,33 @@ const Vanamahotsav = () => {
               <TouchableOpacity
                 style={[
                   styles.uploadButton,
-                  getFieldError(imageFieldName) && isFieldTouched(imageFieldName) &&
-                  styles.inputError,
+                  formik.touched[imageFieldName] && formik.errors[imageFieldName] && styles.inputError,
                 ]}
-                onPress={async () => {
-                  const path = 'APFD/VANAMAHOTSAV/';
-                  ImageBucketRN(
-                    formik,
-                    path,
-                    imageFieldName,
-                    20971520,
-                    'camera',
-                    dispatch
-                  );
-                  await getLocation(locationFieldName);
-                  // Validate image after upload
-                  setTimeout(() => {
-                    handleFieldBlur(imageFieldName);
-                    handleFieldBlur(locationFieldName);
-                  }, 500);
-                }}
+                onPress={() => handleImageCapture(index)}
               >
-                <Icon name="camera-outline" size={24} color="#fff" />
-                <Text style={styles.uploadButtonText}>Capture Image {index + 1}</Text>
+                <Text style={styles.uploadButtonText}>📷 Capture Image {index + 1}</Text>
               </TouchableOpacity>
               
-              {getFieldError(imageFieldName) && isFieldTouched(imageFieldName) && (
-                <Text style={styles.errorText}>{getFieldError(imageFieldName)}</Text>
+              {formik.touched[imageFieldName] && formik.errors[imageFieldName] && (
+                <Text style={styles.errorText}>{formik.errors[imageFieldName]}</Text>
               )}
               
               {item.image && (
                 <View style={styles.previewContainer}>
                   <Image source={{ uri: item.image }} style={styles.previewImage} />
-                  {item.imageLocation && (
+                  
+                  {/* Location displayed below the image */}
+                  <View style={styles.locationContainer}>
                     <View style={styles.locationBox}>
-                      <Icon name="location-outline" size={14} color="#666" />
-                      <Text style={styles.locationText}>{item.imageLocation}</Text>
+                      <Text style={styles.locationEmoji}>📍</Text>
+                      <Text style={styles.locationText} numberOfLines={2}>
+                        {item.imageLocation || 'Location not available'}
+                      </Text>
                     </View>
-                  )}
+                    {formik.touched[locationFieldName] && formik.errors[locationFieldName] && (
+                      <Text style={styles.errorText}>{formik.errors[locationFieldName]}</Text>
+                    )}
+                  </View>
                 </View>
               )}
             </View>
@@ -427,7 +345,7 @@ const Vanamahotsav = () => {
             style={styles.addImageButton}
             onPress={addImageField}
           >
-            <Icon name="add-circle" size={28} color="#28a745" />
+            <Text style={styles.addIcon}>➕</Text>
             <Text style={styles.addImageText}>Add</Text>
           </TouchableOpacity>
         </View>
@@ -447,7 +365,7 @@ const Vanamahotsav = () => {
       <View>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>
-            <Icon name="leaf-outline" size={24} color="#2e7d32" /> Vana Mahotsav
+            🌿 Vana Mahotsav
           </Text>
         </View>
 
@@ -455,11 +373,9 @@ const Vanamahotsav = () => {
           <View style={styles.panelBody}>
             {/* Location Type Display */}
             <View style={styles.locationTypeContainer}>
-              <Icon 
-                name={locationType === 'forest' ? 'forest-outline' : 'home-outline'} 
-                size={20} 
-                color="#2e7d32" 
-              />
+              <Text style={styles.locationEmoji}>
+                {locationType === 'forest' ? '🌲' : '🏠'}
+              </Text>
               <Text style={styles.locationTypeLabel}>Location Type:</Text>
               <Text style={styles.locationTypeValue}>
                 {locationType === 'forest' ? 'Forest' : 'Non-Forest'}
@@ -471,15 +387,14 @@ const Vanamahotsav = () => {
               <>
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Section <Text style={styles.star}>*</Text></Text>
-                  <View style={[styles.pickerContainer, 
-                    getFieldError('section') && isFieldTouched('section') && styles.inputError
+                  <View style={[
+                    styles.pickerContainer,
+                    formik.touched.section && formik.errors.section && styles.inputError
                   ]}>
                     <Picker
                       selectedValue={formik.values.section}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('section', itemValue);
-                        formik.setFieldTouched('section', true);
-                        setFieldErrors(prev => ({ ...prev, section: undefined }));
                         GetBeat(itemValue, setBeat, setCompartment, setBlock, dispatch);
                       }}
                       style={styles.picker}
@@ -490,22 +405,21 @@ const Vanamahotsav = () => {
                       ))}
                     </Picker>
                   </View>
-                  {getFieldError('section') && isFieldTouched('section') && (
-                    <Text style={styles.errorText}>{getFieldError('section')}</Text>
+                  {formik.touched.section && formik.errors.section && (
+                    <Text style={styles.errorText}>{formik.errors.section}</Text>
                   )}
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Beat <Text style={styles.star}>*</Text></Text>
-                  <View style={[styles.pickerContainer,
-                    getFieldError('beat') && isFieldTouched('beat') && styles.inputError
+                  <View style={[
+                    styles.pickerContainer,
+                    formik.touched.beat && formik.errors.beat && styles.inputError
                   ]}>
                     <Picker
                       selectedValue={formik.values.beat}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('beat', itemValue);
-                        formik.setFieldTouched('beat', true);
-                        setFieldErrors(prev => ({ ...prev, beat: undefined }));
                         GetCompartment(itemValue, setCompartment, setBlock, dispatch);
                       }}
                       style={styles.picker}
@@ -516,22 +430,21 @@ const Vanamahotsav = () => {
                       ))}
                     </Picker>
                   </View>
-                  {getFieldError('beat') && isFieldTouched('beat') && (
-                    <Text style={styles.errorText}>{getFieldError('beat')}</Text>
+                  {formik.touched.beat && formik.errors.beat && (
+                    <Text style={styles.errorText}>{formik.errors.beat}</Text>
                   )}
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Compartment <Text style={styles.star}>*</Text></Text>
-                  <View style={[styles.pickerContainer,
-                    getFieldError('compartment') && isFieldTouched('compartment') && styles.inputError
+                  <View style={[
+                    styles.pickerContainer,
+                    formik.touched.compartment && formik.errors.compartment && styles.inputError
                   ]}>
                     <Picker
                       selectedValue={formik.values.compartment}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('compartment', itemValue);
-                        formik.setFieldTouched('compartment', true);
-                        setFieldErrors(prev => ({ ...prev, compartment: undefined }));
                         GetBlock(itemValue, setBlock, dispatch, formik.values.beat);
                       }}
                       style={styles.picker}
@@ -542,22 +455,21 @@ const Vanamahotsav = () => {
                       ))}
                     </Picker>
                   </View>
-                  {getFieldError('compartment') && isFieldTouched('compartment') && (
-                    <Text style={styles.errorText}>{getFieldError('compartment')}</Text>
+                  {formik.touched.compartment && formik.errors.compartment && (
+                    <Text style={styles.errorText}>{formik.errors.compartment}</Text>
                   )}
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Block <Text style={styles.star}>*</Text></Text>
-                  <View style={[styles.pickerContainer,
-                    getFieldError('block') && isFieldTouched('block') && styles.inputError
+                  <View style={[
+                    styles.pickerContainer,
+                    formik.touched.block && formik.errors.block && styles.inputError
                   ]}>
                     <Picker
                       selectedValue={formik.values.block}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('block', itemValue);
-                        formik.setFieldTouched('block', true);
-                        setFieldErrors(prev => ({ ...prev, block: undefined }));
                       }}
                       style={styles.picker}
                     >
@@ -567,8 +479,8 @@ const Vanamahotsav = () => {
                       ))}
                     </Picker>
                   </View>
-                  {getFieldError('block') && isFieldTouched('block') && (
-                    <Text style={styles.errorText}>{getFieldError('block')}</Text>
+                  {formik.touched.block && formik.errors.block && (
+                    <Text style={styles.errorText}>{formik.errors.block}</Text>
                   )}
                 </View>
               </>
@@ -577,15 +489,14 @@ const Vanamahotsav = () => {
             {/* District */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>District <Text style={styles.star}>*</Text></Text>
-              <View style={[styles.pickerContainer,
-                getFieldError('distCode') && isFieldTouched('distCode') && styles.inputError
+              <View style={[
+                styles.pickerContainer,
+                formik.touched.distCode && formik.errors.distCode && styles.inputError
               ]}>
                 <Picker
                   selectedValue={formik.values.distCode}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('distCode', itemValue);
-                    formik.setFieldTouched('distCode', true);
-                    setFieldErrors(prev => ({ ...prev, distCode: undefined }));
                     GetNewMandals(itemValue, setMandal, setVillage, dispatch);
                     formik.setFieldValue('mandalCode', '');
                     formik.setFieldValue('villageCode', '');
@@ -599,23 +510,22 @@ const Vanamahotsav = () => {
                   ))}
                 </Picker>
               </View>
-              {getFieldError('distCode') && isFieldTouched('distCode') && (
-                <Text style={styles.errorText}>{getFieldError('distCode')}</Text>
+              {formik.touched.distCode && formik.errors.distCode && (
+                <Text style={styles.errorText}>{formik.errors.distCode}</Text>
               )}
             </View>
 
             {/* Mandal */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>Mandal <Text style={styles.star}>*</Text></Text>
-              <View style={[styles.pickerContainer,
-                getFieldError('mandalCode') && isFieldTouched('mandalCode') && styles.inputError
+              <View style={[
+                styles.pickerContainer,
+                formik.touched.mandalCode && formik.errors.mandalCode && styles.inputError
               ]}>
                 <Picker
                   selectedValue={formik.values.mandalCode}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('mandalCode', itemValue);
-                    formik.setFieldTouched('mandalCode', true);
-                    setFieldErrors(prev => ({ ...prev, mandalCode: undefined }));
                     NewVillages(itemValue, setVillage, dispatch, districtCode);
                   }}
                   style={styles.picker}
@@ -626,23 +536,22 @@ const Vanamahotsav = () => {
                   ))}
                 </Picker>
               </View>
-              {getFieldError('mandalCode') && isFieldTouched('mandalCode') && (
-                <Text style={styles.errorText}>{getFieldError('mandalCode')}</Text>
+              {formik.touched.mandalCode && formik.errors.mandalCode && (
+                <Text style={styles.errorText}>{formik.errors.mandalCode}</Text>
               )}
             </View>
 
             {/* Village */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>Village <Text style={styles.star}>*</Text></Text>
-              <View style={[styles.pickerContainer,
-                getFieldError('villageCode') && isFieldTouched('villageCode') && styles.inputError
+              <View style={[
+                styles.pickerContainer,
+                formik.touched.villageCode && formik.errors.villageCode && styles.inputError
               ]}>
                 <Picker
                   selectedValue={formik.values.villageCode}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('villageCode', itemValue);
-                    formik.setFieldTouched('villageCode', true);
-                    setFieldErrors(prev => ({ ...prev, villageCode: undefined }));
                   }}
                   style={styles.picker}
                 >
@@ -652,8 +561,8 @@ const Vanamahotsav = () => {
                   ))}
                 </Picker>
               </View>
-              {getFieldError('villageCode') && isFieldTouched('villageCode') && (
-                <Text style={styles.errorText}>{getFieldError('villageCode')}</Text>
+              {formik.touched.villageCode && formik.errors.villageCode && (
+                <Text style={styles.errorText}>{formik.errors.villageCode}</Text>
               )}
             </View>
 
@@ -663,7 +572,7 @@ const Vanamahotsav = () => {
               <TouchableOpacity
                 style={[
                   styles.dateInputWrapper,
-                  getFieldError('plantationDate') && isFieldTouched('plantationDate') && styles.inputError
+                  formik.touched.plantationDate && formik.errors.plantationDate && styles.inputError
                 ]}
                 onPress={() => setShowDatePicker(true)}
                 activeOpacity={0.7}
@@ -674,7 +583,7 @@ const Vanamahotsav = () => {
                 ]}>
                   {formik.values.plantationDate || 'YYYY-MM-DD'}
                 </Text>
-                <Icon name="calendar-outline" size={22} color="#2e7d32" />
+                <Text style={styles.calendarEmoji}>📅</Text>
               </TouchableOpacity>
               
               {showDatePicker && (
@@ -687,8 +596,8 @@ const Vanamahotsav = () => {
                 />
               )}
               
-              {getFieldError('plantationDate') && isFieldTouched('plantationDate') && (
-                <Text style={styles.errorText}>{getFieldError('plantationDate')}</Text>
+              {formik.touched.plantationDate && formik.errors.plantationDate && (
+                <Text style={styles.errorText}>{formik.errors.plantationDate}</Text>
               )}
             </View>
 
@@ -698,21 +607,15 @@ const Vanamahotsav = () => {
               <TextInput
                 style={[
                   styles.input,
-                  getFieldError('landmark') && isFieldTouched('landmark') && styles.inputError,
+                  formik.touched.landmark && formik.errors.landmark && styles.inputError,
                 ]}
                 placeholder="Enter Location / Landmark"
                 value={formik.values.landmark}
-                onChangeText={(text) => {
-                  formik.setFieldValue('landmark', text);
-                  // Clear error when user starts typing
-                  if (fieldErrors.landmark) {
-                    setFieldErrors(prev => ({ ...prev, landmark: undefined }));
-                  }
-                }}
-                onBlur={() => handleFieldBlur('landmark')}
+                onChangeText={formik.handleChange('landmark')}
+                onBlur={formik.handleBlur('landmark')}
               />
-              {getFieldError('landmark') && isFieldTouched('landmark') && (
-                <Text style={styles.errorText}>{getFieldError('landmark')}</Text>
+              {formik.touched.landmark && formik.errors.landmark && (
+                <Text style={styles.errorText}>{formik.errors.landmark}</Text>
               )}
             </View>
 
@@ -720,15 +623,14 @@ const Vanamahotsav = () => {
             {locationType === 'forest' && (
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Scheme <Text style={styles.star}>*</Text></Text>
-                <View style={[styles.pickerContainer,
-                  getFieldError('scheme') && isFieldTouched('scheme') && styles.inputError
+                <View style={[
+                  styles.pickerContainer,
+                  formik.touched.scheme && formik.errors.scheme && styles.inputError
                 ]}>
                   <Picker
                     selectedValue={formik.values.scheme}
                     onValueChange={(itemValue) => {
                       formik.setFieldValue('scheme', itemValue);
-                      formik.setFieldTouched('scheme', true);
-                      setFieldErrors(prev => ({ ...prev, scheme: undefined }));
                     }}
                     style={styles.picker}
                   >
@@ -738,8 +640,8 @@ const Vanamahotsav = () => {
                     ))}
                   </Picker>
                 </View>
-                {getFieldError('scheme') && isFieldTouched('scheme') && (
-                  <Text style={styles.errorText}>{getFieldError('scheme')}</Text>
+                {formik.touched.scheme && formik.errors.scheme && (
+                  <Text style={styles.errorText}>{formik.errors.scheme}</Text>
                 )}
               </View>
             )}
@@ -747,7 +649,7 @@ const Vanamahotsav = () => {
             {/* Species Details Section */}
             <View style={styles.speciesSection}>
               <View style={styles.speciesHeader}>
-                <Icon name="tree-outline" size={20} color="#fff" />
+                <Text style={styles.speciesEmoji}>🌳</Text>
                 <Text style={styles.speciesTitle}>Species Details</Text>
               </View>
 
@@ -755,15 +657,14 @@ const Vanamahotsav = () => {
                 {/* Species */}
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Species <Text style={styles.star}>*</Text></Text>
-                  <View style={[styles.pickerContainer,
-                    getFieldError('speciesDetails.species') && isFieldTouched('speciesDetails.species') && styles.inputError
+                  <View style={[
+                    styles.pickerContainer,
+                    formik.touched.speciesDetails?.species && formik.errors.speciesDetails?.species && styles.inputError
                   ]}>
                     <Picker
                       selectedValue={formik.values.speciesDetails.species}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('speciesDetails.species', itemValue);
-                        formik.setFieldTouched('speciesDetails.species', true);
-                        setFieldErrors(prev => ({ ...prev, 'speciesDetails.species': undefined }));
                       }}
                       style={styles.picker}
                     >
@@ -774,8 +675,8 @@ const Vanamahotsav = () => {
                       <Picker.Item label="Others" value="999" />
                     </Picker>
                   </View>
-                  {getFieldError('speciesDetails.species') && isFieldTouched('speciesDetails.species') && (
-                    <Text style={styles.errorText}>{getFieldError('speciesDetails.species')}</Text>
+                  {formik.touched.speciesDetails?.species && formik.errors.speciesDetails?.species && (
+                    <Text style={styles.errorText}>{formik.errors.speciesDetails.species}</Text>
                   )}
                   {formik.values.speciesDetails.species === '999' && (
                     <TextInput
@@ -795,8 +696,8 @@ const Vanamahotsav = () => {
                   <TextInput
                     style={[
                       styles.input,
-                      getFieldError('speciesDetails.noOfPlants') && 
-                        isFieldTouched('speciesDetails.noOfPlants') && 
+                      formik.touched.speciesDetails?.noOfPlants && 
+                        formik.errors.speciesDetails?.noOfPlants && 
                         styles.inputError,
                     ]}
                     placeholder="Enter number of plants"
@@ -805,31 +706,27 @@ const Vanamahotsav = () => {
                     onChangeText={(text) => {
                       const numericText = text.replace(/[^0-9]/g, '');
                       formik.setFieldValue('speciesDetails.noOfPlants', numericText);
-                      if (fieldErrors['speciesDetails.noOfPlants']) {
-                        setFieldErrors(prev => ({ ...prev, 'speciesDetails.noOfPlants': undefined }));
-                      }
                     }}
-                    onBlur={() => handleFieldBlur('speciesDetails.noOfPlants')}
+                    onBlur={formik.handleBlur('speciesDetails.noOfPlants')}
                   />
-                  {getFieldError('speciesDetails.noOfPlants') && 
-                    isFieldTouched('speciesDetails.noOfPlants') && (
-                      <Text style={styles.errorText}>{getFieldError('speciesDetails.noOfPlants')}</Text>
+                  {formik.touched.speciesDetails?.noOfPlants && 
+                    formik.errors.speciesDetails?.noOfPlants && (
+                      <Text style={styles.errorText}>{formik.errors.speciesDetails.noOfPlants}</Text>
                     )}
                 </View>
 
                 {/* Plantation Type */}
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Plantation Type <Text style={styles.star}>*</Text></Text>
-                  <View style={[styles.pickerContainer,
-                    getFieldError('speciesDetails.plantationType') && 
-                    isFieldTouched('speciesDetails.plantationType') && styles.inputError
+                  <View style={[
+                    styles.pickerContainer,
+                    formik.touched.speciesDetails?.plantationType && 
+                    formik.errors.speciesDetails?.plantationType && styles.inputError
                   ]}>
                     <Picker
                       selectedValue={formik.values.speciesDetails.plantationType}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('speciesDetails.plantationType', itemValue);
-                        formik.setFieldTouched('speciesDetails.plantationType', true);
-                        setFieldErrors(prev => ({ ...prev, 'speciesDetails.plantationType': undefined }));
                         // Clear dependent fields
                         formik.setFieldValue('speciesDetails.kmlFilePath', '');
                         formik.setFieldValue('speciesDetails.plantationLength', '');
@@ -845,9 +742,9 @@ const Vanamahotsav = () => {
                       <Picker.Item label="Others" value="5" />
                     </Picker>
                   </View>
-                  {getFieldError('speciesDetails.plantationType') && 
-                    isFieldTouched('speciesDetails.plantationType') && (
-                      <Text style={styles.errorText}>{getFieldError('speciesDetails.plantationType')}</Text>
+                  {formik.touched.speciesDetails?.plantationType && 
+                    formik.errors.speciesDetails?.plantationType && (
+                      <Text style={styles.errorText}>{formik.errors.speciesDetails.plantationType}</Text>
                     )}
                 </View>
 
@@ -858,23 +755,18 @@ const Vanamahotsav = () => {
                     <TextInput
                       style={[
                         styles.input,
-                        getFieldError('speciesDetails.othersPlantationType') && 
-                          isFieldTouched('speciesDetails.othersPlantationType') && 
+                        formik.touched.speciesDetails?.othersPlantationType && 
+                          formik.errors.speciesDetails?.othersPlantationType && 
                           styles.inputError,
                       ]}
                       placeholder="Enter other plantation type"
                       value={formik.values.speciesDetails.othersPlantationType}
-                      onChangeText={(text) => {
-                        formik.setFieldValue('speciesDetails.othersPlantationType', text);
-                        if (fieldErrors['speciesDetails.othersPlantationType']) {
-                          setFieldErrors(prev => ({ ...prev, 'speciesDetails.othersPlantationType': undefined }));
-                        }
-                      }}
-                      onBlur={() => handleFieldBlur('speciesDetails.othersPlantationType')}
+                      onChangeText={formik.handleChange('speciesDetails.othersPlantationType')}
+                      onBlur={formik.handleBlur('speciesDetails.othersPlantationType')}
                     />
-                    {getFieldError('speciesDetails.othersPlantationType') && 
-                      isFieldTouched('speciesDetails.othersPlantationType') && (
-                        <Text style={styles.errorText}>{getFieldError('speciesDetails.othersPlantationType')}</Text>
+                    {formik.touched.speciesDetails?.othersPlantationType && 
+                      formik.errors.speciesDetails?.othersPlantationType && (
+                        <Text style={styles.errorText}>{formik.errors.speciesDetails.othersPlantationType}</Text>
                       )}
                   </View>
                 )}
@@ -885,24 +777,19 @@ const Vanamahotsav = () => {
                   <TextInput
                     style={[
                       styles.input,
-                      getFieldError('speciesDetails.speciesPlantationArea') && 
-                        isFieldTouched('speciesDetails.speciesPlantationArea') && 
+                      formik.touched.speciesDetails?.speciesPlantationArea && 
+                        formik.errors.speciesDetails?.speciesPlantationArea && 
                         styles.inputError,
                     ]}
                     placeholder="Enter area in hectares"
                     keyboardType="numeric"
                     value={formik.values.speciesDetails.speciesPlantationArea}
-                    onChangeText={(text) => {
-                      formik.setFieldValue('speciesDetails.speciesPlantationArea', text);
-                      if (fieldErrors['speciesDetails.speciesPlantationArea']) {
-                        setFieldErrors(prev => ({ ...prev, 'speciesDetails.speciesPlantationArea': undefined }));
-                      }
-                    }}
-                    onBlur={() => handleFieldBlur('speciesDetails.speciesPlantationArea')}
+                    onChangeText={formik.handleChange('speciesDetails.speciesPlantationArea')}
+                    onBlur={formik.handleBlur('speciesDetails.speciesPlantationArea')}
                   />
-                  {getFieldError('speciesDetails.speciesPlantationArea') && 
-                    isFieldTouched('speciesDetails.speciesPlantationArea') && (
-                      <Text style={styles.errorText}>{getFieldError('speciesDetails.speciesPlantationArea')}</Text>
+                  {formik.touched.speciesDetails?.speciesPlantationArea && 
+                    formik.errors.speciesDetails?.speciesPlantationArea && (
+                      <Text style={styles.errorText}>{formik.errors.speciesDetails.speciesPlantationArea}</Text>
                     )}
                 </View>
 
@@ -918,8 +805,8 @@ const Vanamahotsav = () => {
                     <TouchableOpacity
                       style={[
                         styles.uploadButton,
-                        getFieldError('speciesDetails.kmlFilePath') && 
-                          isFieldTouched('speciesDetails.kmlFilePath') && 
+                        formik.touched.speciesDetails?.kmlFilePath && 
+                          formik.errors.speciesDetails?.kmlFilePath && 
                           styles.inputError,
                       ]}
                       onPress={() => {
@@ -932,41 +819,32 @@ const Vanamahotsav = () => {
                           'document',
                           dispatch
                         );
-                        setTimeout(() => {
-                          handleFieldBlur('speciesDetails.kmlFilePath');
-                        }, 500);
                       }}
                     >
-                      <Icon name="document-outline" size={20} color="#fff" />
-                      <Text style={styles.uploadButtonText}>Upload KML File</Text>
+                      <Text style={styles.uploadButtonText}>📄 Upload KML File</Text>
                     </TouchableOpacity>
                   ) : (
                     <TextInput
                       style={[
                         styles.input,
-                        getFieldError('speciesDetails.plantationLength') && 
-                          isFieldTouched('speciesDetails.plantationLength') && 
+                        formik.touched.speciesDetails?.plantationLength && 
+                          formik.errors.speciesDetails?.plantationLength && 
                           styles.inputError,
                       ]}
                       placeholder="Enter plantation length"
                       keyboardType="numeric"
                       value={formik.values.speciesDetails.plantationLength}
-                      onChangeText={(text) => {
-                        formik.setFieldValue('speciesDetails.plantationLength', text);
-                        if (fieldErrors['speciesDetails.plantationLength']) {
-                          setFieldErrors(prev => ({ ...prev, 'speciesDetails.plantationLength': undefined }));
-                        }
-                      }}
-                      onBlur={() => handleFieldBlur('speciesDetails.plantationLength')}
+                      onChangeText={formik.handleChange('speciesDetails.plantationLength')}
+                      onBlur={formik.handleBlur('speciesDetails.plantationLength')}
                     />
                   )}
-                  {getFieldError('speciesDetails.kmlFilePath') && 
-                    isFieldTouched('speciesDetails.kmlFilePath') && (
-                      <Text style={styles.errorText}>{getFieldError('speciesDetails.kmlFilePath')}</Text>
+                  {formik.touched.speciesDetails?.kmlFilePath && 
+                    formik.errors.speciesDetails?.kmlFilePath && (
+                      <Text style={styles.errorText}>{formik.errors.speciesDetails.kmlFilePath}</Text>
                     )}
-                  {getFieldError('speciesDetails.plantationLength') && 
-                    isFieldTouched('speciesDetails.plantationLength') && (
-                      <Text style={styles.errorText}>{getFieldError('speciesDetails.plantationLength')}</Text>
+                  {formik.touched.speciesDetails?.plantationLength && 
+                    formik.errors.speciesDetails?.plantationLength && (
+                      <Text style={styles.errorText}>{formik.errors.speciesDetails.plantationLength}</Text>
                     )}
                 </View>
 
@@ -1001,7 +879,7 @@ const Vanamahotsav = () => {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <>
-                  <Icon name="checkmark-circle-outline" size={20} color="#fff" />
+                  <Text style={styles.submitEmoji}>✅</Text>
                   <Text style={styles.submitButtonText}>Submit</Text>
                 </>
               )}
@@ -1017,74 +895,84 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    padding: 16,
   },
   cardHeader: {
-    padding: 15,
-    backgroundColor: '#e8f5e9',
-    borderBottomWidth: 1,
-    borderBottomColor: '#c8e6c9',
+    backgroundColor: '#2e7d32',
+    padding: 16,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#2e7d32',
-    textAlign: 'center',
+    color: '#fff',
   },
   cardBody: {
-    padding: 10,
+    backgroundColor: '#fff',
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    padding: 16,
+    marginBottom: 20,
   },
   panelBody: {
-    padding: 10,
+    padding: 8,
   },
   locationTypeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
     backgroundColor: '#e8f5e9',
+    padding: 12,
     borderRadius: 8,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#c8e6c9',
+    marginBottom: 16,
+  },
+  locationEmoji: {
+    fontSize: 20,
+    marginRight: 8,
   },
   locationTypeLabel: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#333',
-    marginLeft: 8,
-    marginRight: 4,
+    fontWeight: '600',
   },
   locationTypeValue: {
     fontSize: 14,
-    fontWeight: '700',
     color: '#2e7d32',
+    fontWeight: 'bold',
+    marginLeft: 4,
   },
   formGroup: {
-    marginBottom: 15,
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 5,
-  },
-  subLabel: {
-    fontSize: 14,
     fontWeight: '600',
-    color: '#2e7d32',
-    marginBottom: 10,
-    marginTop: 5,
+    color: '#333',
+    marginBottom: 6,
   },
   star: {
     color: '#dc3545',
   },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 6,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ced4da',
-    borderRadius: 8,
+    borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
     backgroundColor: '#fff',
+    color: '#333',
   },
   inputError: {
     borderColor: '#dc3545',
@@ -1092,29 +980,17 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#dc3545',
     fontSize: 12,
-    marginTop: 5,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ced4da',
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    overflow: 'hidden',
-  },
-  picker: {
-    height: 50,
-    width: '100%',
-    color: '#333',
+    marginTop: 4,
   },
   dateInputWrapper: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#ced4da',
-    borderRadius: 8,
+    borderRadius: 6,
     paddingHorizontal: 12,
-    paddingVertical: 14,
+    paddingVertical: 10,
     backgroundColor: '#fff',
   },
   dateInputText: {
@@ -1124,54 +1000,52 @@ const styles = StyleSheet.create({
   datePlaceholder: {
     color: '#999',
   },
-  uploadButton: {
+  calendarEmoji: {
+    fontSize: 20,
+  },
+  speciesSection: {
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  speciesHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#2e7d32',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    padding: 12,
     borderRadius: 8,
-    justifyContent: 'center',
+    marginBottom: 12,
   },
-  uploadButtonText: {
+  speciesEmoji: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  speciesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 8,
   },
-  previewContainer: {
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  previewImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  locationBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  speciesCard: {
     backgroundColor: '#f8f9fa',
-    padding: 8,
-    borderRadius: 4,
-    marginTop: 5,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    padding: 12,
+    borderRadius: 8,
   },
-  locationText: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
+  subLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  imageHeaderContainer: {
+    marginTop: 12,
+    marginBottom: 8,
   },
   imageFieldContainer: {
-    marginBottom: 15,
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 10,
-    backgroundColor: '#fff',
   },
   imageFieldHeader: {
     flexDirection: 'row',
@@ -1180,84 +1054,104 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   imageFieldTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#333',
   },
-  imageHeaderContainer: {
+  removeImageButton: {
+    padding: 4,
+  },
+  removeIcon: {
+    fontSize: 24,
+  },
+  uploadButton: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'center',
+    backgroundColor: '#2e7d32',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginVertical: 4,
+  },
+  uploadButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  previewContainer: {
+    marginTop: 8,
+  },
+  previewImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 6,
+    resizeMode: 'cover',
+  },
+  locationContainer: {
+    marginTop: 8,
+  },
+  locationBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e8f5e9',
+    padding: 8,
+    borderRadius: 6,
+  },
+  locationText: {
+    fontSize: 12,
+    color: '#2e7d32',
+    marginLeft: 4,
+    flex: 1,
   },
   addImageButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-end',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  addIcon: {
+    fontSize: 28,
+    marginRight: 4,
   },
   addImageText: {
     fontSize: 14,
     color: '#28a745',
     fontWeight: '600',
-    marginLeft: 4,
-  },
-  removeImageButton: {
-    padding: 4,
-  },
-  speciesSection: {
-    marginTop: 10,
-  },
-  speciesHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2e7d32',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  speciesTitle: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  speciesCard: {
-    backgroundColor: '#f8f9fa',
-    padding: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-  },
-  mt1: {
-    marginTop: 10,
   },
   imageCountContainer: {
     alignItems: 'center',
-    marginTop: 5,
-    marginBottom: 10,
+    marginTop: 8,
   },
   imageCountText: {
     fontSize: 12,
     color: '#666',
-    fontWeight: '500',
   },
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#2e7d32',
-    padding: 14,
+    paddingVertical: 14,
     borderRadius: 8,
-    marginTop: 10,
+    marginTop: 16,
   },
-  disabledButton: {
-    opacity: 0.7,
+  submitEmoji: {
+    fontSize: 20,
+    marginRight: 8,
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    fontWeight: 'bold',
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+  mt1: {
+    marginTop: 8,
   },
 });
 
