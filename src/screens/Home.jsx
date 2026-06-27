@@ -21,6 +21,7 @@ import * as Location from 'expo-location';
 import {
   commonAPICall,
   CONTEXT_HEADING,
+  CREATENEWHARITHANDHRA,
   SCHEMES,
   VanamahotsavamEntry,
   VANASECTIONS,
@@ -117,11 +118,11 @@ const Vanamahotsav = () => {
               .max(180, 'Invalid longitude'),
           })
         ).min(1, 'Minimum 1 image required').max(15, 'Maximum 15 images allowed'),
-        kmlFilePath: Yup.string().when('plantationType', {
-          is: (val) => val === '1' || val === '4',
-          then: (schema) => schema.required('KML file is required'),
-          otherwise: (schema) => schema.notRequired(),
-        }),
+        // kmlFilePath: Yup.string().when('plantationType', {
+        //   is: (val) => val === '1' || val === '4',
+        //   then: (schema) => schema.required('KML file is required'),
+        //   otherwise: (schema) => schema.notRequired(),
+        // }),
         plantationLength: Yup.string().when('plantationType', {
           is: (val) => val === '2' || val === '3' || val === '5',
           then: (schema) => schema.required('Plantation length is required'),
@@ -183,26 +184,6 @@ const Vanamahotsav = () => {
     }];
   };
 
-  const formik = useFormik({
-    initialValues: {
-      roleId: roleId,
-      locationType: locationType,
-      section: '',
-      beat: '',
-      compartment: '',
-      block: '',
-      distCode: '',
-      mandalCode: '',
-      villageCode: '',
-      plantationDate: moment().format('YYYY-MM-DD'),
-      landmark: '',
-      scheme: '',
-      speciesDetails: getInitialSpecies(),
-    },
-    validationSchema: validationSchema,
-    onSubmit: HandleSubmit,
-  });
-
   const HandleSubmit = async (values) => {
     try {
       setLoading(true);
@@ -243,10 +224,9 @@ const Vanamahotsav = () => {
         }
       });
 
-      const response = await commonAPICall(VanamahotsavamEntry, payload, 'post', dispatch);
+      const response = await commonAPICall(CREATENEWHARITHANDHRA, payload, 'post', dispatch);
       if (response.status === 200) {
         formik.resetForm();
-        Alert.alert('Success', 'Vanamahotsav entry submitted successfully');
       }
     } catch (error) {
       console.error('Submit error:', error);
@@ -255,6 +235,28 @@ const Vanamahotsav = () => {
       setLoading(false);
     }
   };
+
+  const formik = useFormik({
+    initialValues: {
+      roleId: roleId,
+      locationType: locationType,
+      section: '',
+      beat: '',
+      compartment: '',
+      block: '',
+      distCode: '',
+      mandalCode: '',
+      villageCode: '',
+      plantationDate: moment().format('YYYY-MM-DD'),
+      landmark: '',
+      scheme: '',
+      speciesDetails: getInitialSpecies(),
+    },
+    validationSchema: validationSchema,
+    onSubmit: HandleSubmit,
+  });
+
+  
 
   // Handle Date Change
   const onDateChange = (event, selectedDate) => {
@@ -701,9 +703,6 @@ const Vanamahotsav = () => {
                     }}
                   />
                 )}
-                {speciesTouched.kmlFilePath && speciesErrors.kmlFilePath && (
-                  <Text style={styles.errorText}>{speciesErrors.kmlFilePath}</Text>
-                )}
                 {speciesTouched.plantationLength && speciesErrors.plantationLength && (
                   <Text style={styles.errorText}>{speciesErrors.plantationLength}</Text>
                 )}
@@ -716,12 +715,12 @@ const Vanamahotsav = () => {
         })}
         
         {/* Add Species Button */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.addSpeciesButton}
           onPress={addSpeciesField}
         >
           <Text style={styles.addSpeciesButtonText}>➕ Add Another Species</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     );
   };
@@ -734,7 +733,7 @@ const Vanamahotsav = () => {
             🌿 Vana Mahotsav
           </Text>
         </View>
-
+         
         <View style={styles.cardBody}>
           <View style={styles.panelBody}>
             {/* Location Type Display */}
