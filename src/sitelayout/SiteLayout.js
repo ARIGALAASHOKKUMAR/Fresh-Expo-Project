@@ -409,8 +409,16 @@ const SiteLayout = ({
 
           <View style={styles.headerRight}>
 
-            <Text style={{color:"white",fontWeight:"bold"}}>Welcome:{username}</Text>
+            <Text style={{color:"white",fontWeight:"bold",marginRight:"60px"}}>Welcome:{username}{" "}</Text>
           </View>
+          {showProfile && (
+              <TouchableOpacity
+                onPress={() => setProfileMenuVisible(!profileMenuVisible)}
+                style={{marginLeft:"20px"}}
+              >
+                <Image source={profileSource} style={styles.profileImage} />
+              </TouchableOpacity>
+            )}
         </View>
 
         {/* SIDEBAR */}

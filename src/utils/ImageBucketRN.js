@@ -217,24 +217,24 @@ async function openCamera(formik, path, name, size, dispatch) {
     let addressText = null;
 
     try {
-      // const locPermission = await Location.requestForegroundPermissionsAsync();
-      // if (locPermission.granted) {
-      //   const loc = await Location.getCurrentPositionAsync({});
-      //   const address = await Location.reverseGeocodeAsync({
-      //     latitude: loc.coords.latitude,
-      //     longitude: loc.coords.longitude,
-      //   });
-      //   if (address.length > 0) {
-      //     const place = address[0];
-      //     addressText = [
-      //       place.formattedAddress,
-      //       `Lat:${loc.coords.latitude}`,
-      //       `Lng:${loc.coords.longitude}`,
-      //     ]
-      //       .filter(Boolean)
-      //       .join(" - ");
-      //   }
-      // }
+      const locPermission = await Location.requestForegroundPermissionsAsync();
+      if (locPermission.granted) {
+        const loc = await Location.getCurrentPositionAsync({});
+        const address = await Location.reverseGeocodeAsync({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+        if (address.length > 0) {
+          const place = address[0];
+          addressText = [
+            place.formattedAddress,
+            `Lat:${loc.coords.latitude}`,
+            `Lng:${loc.coords.longitude}`,
+          ]
+            .filter(Boolean)
+            .join(" - ");
+        }
+      }
     } catch (e) {
       console.log("Location error", e);
     }
