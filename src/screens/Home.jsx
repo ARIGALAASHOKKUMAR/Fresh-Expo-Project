@@ -118,16 +118,6 @@ const Vanamahotsav = () => {
               .max(180, 'Invalid longitude'),
           })
         ).min(1, 'Minimum 1 image required').max(15, 'Maximum 15 images allowed'),
-        // kmlFilePath: Yup.string().when('plantationType', {
-        //   is: (val) => val === '1' || val === '4',
-        //   then: (schema) => schema.required('KML file is required'),
-        //   otherwise: (schema) => schema.notRequired(),
-        // }),
-        plantationLength: Yup.string().when('plantationType', {
-          is: (val) => val === '2' || val === '3' || val === '5',
-          then: (schema) => schema.required('Plantation length is required'),
-          otherwise: (schema) => schema.notRequired(),
-        }),
       })
     ).min(1, 'At least one species is required'),
   });
@@ -390,7 +380,7 @@ const Vanamahotsav = () => {
       <View>
         <View style={styles.imageHeaderContainer}>
           <Text style={styles.subLabel}>
-            Upload Images (Min: 1, Max: 15) <Text style={styles.star}>*</Text>
+            Upload Images (Min: 4, Max: 15) <Text style={styles.star}>*</Text>
           </Text>
         </View>
 
@@ -628,7 +618,6 @@ const Vanamahotsav = () => {
               )}
 
               {/* Area - Only for Block Plantation and Agro Forestry */}
-              {(species.plantationType === '1' || species.plantationType === '4') && (
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Area (Ha) <Text style={styles.star}>*</Text></Text>
                   <TextInput
@@ -652,61 +641,9 @@ const Vanamahotsav = () => {
                     <Text style={styles.errorText}>{speciesErrors.plantationArea}</Text>
                   )}
                 </View>
-              )}
 
               {/* KML File / Plantation Length */}
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>
-                  {['1', '4'].includes(species.plantationType) 
-                    ? 'KML File' 
-                    : species.plantationType === '2' || species.plantationType === '3' || species.plantationType === '5'
-                      ? 'Plantation Length' 
-                      : 'Plantation Length'} <Text style={styles.star}>*</Text>
-                </Text>
-                
-                {['1', '4'].includes(species.plantationType) ? (
-                  <TouchableOpacity
-                    style={[
-                      styles.uploadButton,
-                      speciesTouched.kmlFilePath && speciesErrors.kmlFilePath && styles.inputError,
-                    ]}
-                    onPress={() => {
-                      const path = 'APFD/VANAMAHOTSAV/';
-                      ImageBucketRN(
-                        formik,
-                        path,
-                        `speciesDetails[${speciesIndex}].kmlFilePath`,
-                        20971520,
-                        'document',
-                        dispatch
-                      );
-                    }}
-                  >
-                    <Text style={styles.uploadButtonText}>📄 Upload KML File</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TextInput
-                    style={[
-                      styles.input,
-                      speciesTouched.plantationLength && speciesErrors.plantationLength && styles.inputError,
-                    ]}
-                    placeholder="Enter plantation length"
-                    keyboardType="numeric"
-                    value={species.plantationLength}
-                    onChangeText={(text) => {
-                      const updatedSpecies = [...speciesDetails];
-                      updatedSpecies[speciesIndex].plantationLength = text;
-                      formik.setFieldValue('speciesDetails', updatedSpecies);
-                    }}
-                    onBlur={() => {
-                      formik.setFieldTouched(`speciesDetails[${speciesIndex}].plantationLength`, true);
-                    }}
-                  />
-                )}
-                {speciesTouched.plantationLength && speciesErrors.plantationLength && (
-                  <Text style={styles.errorText}>{speciesErrors.plantationLength}</Text>
-                )}
-              </View>
+              
 
               {/* Dynamic Images */}
               {renderImages(speciesIndex)}
