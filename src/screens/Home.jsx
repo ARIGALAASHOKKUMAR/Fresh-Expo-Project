@@ -34,7 +34,7 @@ const Vanamahotsav = () => {
   const state = useSelector((s) => s.LoginReducer);
   const { districts, roleId } = state;
   
-  const [speciesList, setSpeciesList] = useState([]); // Renamed from species to speciesList
+  const [speciesList, setSpeciesList] = useState([]);
   const [section, setSection] = useState([]);
   const [scheme, setScheme] = useState([]);
   const [mandal, setMandal] = useState([]);
@@ -48,8 +48,7 @@ const Vanamahotsav = () => {
   const [block, setBlock] = useState([]);
 
   // Determine location type based on roleId
-  // roleId 11 = Forest, others = Non-Forest
-  const locationType = roleId !== 11 ? 'forest' : 'nonforest';
+  const locationType = roleId === 6 ? 'forest' : 'nonforest';
 
   // Validation Schema
   const validationSchema = Yup.object().shape({
@@ -77,11 +76,48 @@ const Vanamahotsav = () => {
     mandalCode: Yup.string().required('Mandal is required'),
     villageCode: Yup.string().required('Village is required'),
     plantationDate: Yup.string().required('Plantation date is required'),
-    landmark: Yup.string().required('Landmark is required'),
+    landmark: Yup.string().when('locationType', {
+      is: (val) => val === 'forest',
+      then: () => Yup.string().notRequired(),
+      otherwise: () => Yup.string().required('Landmark is required'),
+    }),
+    area: Yup.string().when('locationType', {
+      is: (val) => val === 'forest',
+      then: () => Yup.string().required('Area is required'),
+      otherwise: () => Yup.string().notRequired(),
+    }),
     scheme: Yup.string().when('locationType', {
       is: (val) => val === 'forest',
       then: () => Yup.string().required('Scheme is required'),
       otherwise: () => Yup.string().notRequired(),
+    }),
+    landType: Yup.string().when('locationType', {
+      is: (val) => val === 'nonforest',
+      then: () => Yup.string().required('Land type is required'),
+      otherwise: () => Yup.string().notRequired(),
+    }),
+    inchargeName: Yup.string().when('locationType', {
+      is: (val) => val === 'nonforest',
+      then: () => Yup.string().required('Incharge name is required'),
+      otherwise: () => Yup.string().notRequired(),
+    }),
+    inchargeDesignation: Yup.string().when('locationType', {
+      is: (val) => val === 'nonforest',
+      then: () => Yup.string().required('Designation is required'),
+      otherwise: () => Yup.string().notRequired(),
+    }),
+    inchargeMobile: Yup.string().when('locationType', {
+      is: (val) => val === 'nonforest',
+      then: () => Yup.string()
+        .required('Mobile number is required')
+        .matches(/^[0-9]{10}$/, 'Must be exactly 10 digits'),
+      otherwise: () => Yup.string().notRequired(),
+    }),
+    plantationType: Yup.string().required('Plantation type is required'),
+    othersPlantationType: Yup.string().when('plantationType', {
+      is: (val) => String(val) === '5',
+      then: (schema) => schema.required('Other plantation type is required'),
+      otherwise: (schema) => schema.notRequired(),
     }),
     speciesDetails: Yup.array().of(
       Yup.object().shape({
@@ -91,35 +127,13 @@ const Vanamahotsav = () => {
           .positive('Must be positive')
           .integer('Must be a whole number')
           .required('Number of plants is required'),
-        plantationType: Yup.string().required('Plantation type is required'),
-        plantationArea: Yup.string()
-          .when('plantationType', {
-            is: (val) => val === '1' || val === '4',
-            then: (schema) => schema.required('Area is required').matches(/^[0-9]+(\.[0-9]{1,2})?$/, 'Enter valid area in hectares'),
-            otherwise: (schema) => schema.notRequired(),
-          }),
-        othersPlantationType: Yup.string().when('plantationType', {
-          is: (val) => String(val) === '5',
-          then: (schema) => schema.required('Other plantation type is required'),
-          otherwise: (schema) => schema.notRequired(),
-        }),
-        imageDetails: Yup.array().of(
-          Yup.object().shape({
-            imagePath: Yup.string().required('Image is required'),
-            latitude: Yup.number()
-              .typeError('Latitude must be a number')
-              .required('Latitude is required')
-              .min(-90, 'Invalid latitude')
-              .max(90, 'Invalid latitude'),
-            longitude: Yup.number()
-              .typeError('Longitude must be a number')
-              .required('Longitude is required')
-              .min(-180, 'Invalid longitude')
-              .max(180, 'Invalid longitude'),
-          })
-        ).min(1, 'Minimum 1 image required').max(15, 'Maximum 15 images allowed'),
       })
     ).min(1, 'At least one species is required'),
+    imageDetails: Yup.array().of(
+      Yup.object().shape({
+        imagePath: Yup.string().required('Image is required'),
+      })
+    ).min(4, 'Minimum 4 images required').max(15, 'Maximum 15 images allowed'),
   });
 
   // Get Sections
@@ -151,26 +165,16 @@ const Vanamahotsav = () => {
   };
 
   useEffect(() => {
-    GetSpecies(setSpeciesList, dispatch); // Changed from setSpecies to setSpeciesList
+    GetSpecies(setSpeciesList, dispatch);
     GetSections();
     GetSchemes();
   }, []);
 
-  // Initialize with one species and one image
+  // Initialize with one species and 4 images
   const getInitialSpecies = () => {
     return [{
       species: '',
       noOfPlants: '',
-      plantationType: '',
-      kmlFilePath: '',
-      plantationLength: '',
-      othersPlantationType: '',
-      plantationArea: '',
-      imageDetails: [{
-        imagePath: '',
-        latitude: null,
-        longitude: null,
-      }],
     }];
   };
 
@@ -184,39 +188,58 @@ const Vanamahotsav = () => {
         mandalCode: Number(values.mandalCode),
         villageCode: Number(values.villageCode),
         plantationDate: values.plantationDate,
-        landmark: values.landmark,
         locationType: values.locationType.toUpperCase(),
-        section: values.section ? Number(values.section) : null,
-        beat: values.beat ? Number(values.beat) : null,
-        compartment: values.compartment ? Number(values.compartment) : null,
-        block: values.block ? Number(values.block) : null,
-        scheme: values.scheme ? Number(values.scheme) : null,
+        plantationType: Number(values.plantationType),
         speciesDetails: values.speciesDetails.map(species => ({
           species: Number(species.species),
           noOfPlants: Number(species.noOfPlants),
-          plantationType: Number(species.plantationType),
-          plantationArea: species.plantationArea ? Number(species.plantationArea) : null,
-          plantationLength: species.plantationLength ? Number(species.plantationLength) : null,
-          othersPlantationType: species.othersPlantationType || null,
-          kmlFilePath: species.kmlFilePath || null,
-          imageDetails: species.imageDetails.map(img => ({
-            imagePath: img.imagePath,
-            latitude: Number(img.latitude),
-            longitude: Number(img.longitude),
-          }))
         }))
       };
 
-      // Remove null values (optional)
+      // Add forest specific fields
+      if (values.locationType === 'forest') {
+        payload.section = values.section ? Number(values.section) : null;
+        payload.beat = values.beat ? Number(values.beat) : null;
+        payload.compartment = values.compartment ? Number(values.compartment) : null;
+        payload.block = values.block ? Number(values.block) : null;
+        payload.scheme = values.scheme ? Number(values.scheme) : null;
+        payload.area = values.area ? Number(values.area) : null;
+        if (values.landmark) payload.landmark = values.landmark;
+      } else {
+        // Non-forest specific fields
+        payload.landType = values.landType;
+        payload.inchargeName = values.inchargeName;
+        payload.inchargeDesignation = values.inchargeDesignation;
+        payload.inchargeMobile = values.inchargeMobile;
+        payload.landmark = values.landmark;
+      }
+
+      // Add others plantation type if selected
+      if (values.plantationType === '5' && values.othersPlantationType) {
+        payload.othersPlantationType = values.othersPlantationType;
+      }
+
+      // Add image details (at top level, not in field array)
+      payload.imageDetails = values.imageDetails.map(img => ({
+        imagePath: img.imagePath,
+        latitude: Number(img.latitude) || null,
+        longitude: Number(img.longitude) || null,
+      }));
+
+      // Remove null values
       Object.keys(payload).forEach(key => {
         if (payload[key] === null || payload[key] === undefined) {
           delete payload[key];
         }
       });
 
+      console.log("payload",payload);
+      
+
       const response = await commonAPICall(CREATENEWHARITHANDHRA, payload, 'post', dispatch);
       if (response.status === 200) {
         formik.resetForm();
+        Alert.alert('Success', 'Entry submitted successfully');
       }
     } catch (error) {
       console.error('Submit error:', error);
@@ -239,14 +262,45 @@ const Vanamahotsav = () => {
       villageCode: '',
       plantationDate: moment().format('YYYY-MM-DD'),
       landmark: '',
+      area: '',
       scheme: '',
+      plantationType: '',
+      othersPlantationType: '',
+      landType: '',
+      inchargeName: '',
+      inchargeDesignation: '',
+      inchargeMobile: '',
       speciesDetails: getInitialSpecies(),
+      imageDetails: [
+        {
+          imagePath: '',
+          latitude: null,
+          longitude: null,
+          locationName: '',
+        },
+        {
+          imagePath: '',
+          latitude: null,
+          longitude: null,
+          locationName: '',
+        },
+        {
+          imagePath: '',
+          latitude: null,
+          longitude: null,
+          locationName: '',
+        },
+        {
+          imagePath: '',
+          latitude: null,
+          longitude: null,
+          locationName: '',
+        }
+      ],
     },
     validationSchema: validationSchema,
     onSubmit: HandleSubmit,
   });
-
-  
 
   // Handle Date Change
   const onDateChange = (event, selectedDate) => {
@@ -257,8 +311,8 @@ const Vanamahotsav = () => {
     formik.setFieldValue('plantationDate', formattedDate);
   };
 
-  // Get location with latitude and longitude
-  const getLocationWithCoords = async () => {
+  // Get location with latitude, longitude, and address
+  const getLocationWithDetails = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -270,9 +324,34 @@ const Vanamahotsav = () => {
         accuracy: Location.Accuracy.High,
       });
 
+      // Reverse geocode to get address
+      let locationName = '';
+      try {
+        const geocode = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+        
+        if (geocode.length > 0) {
+          const address = geocode[0];
+          const parts = [];
+          if (address.name) parts.push(address.name);
+          if (address.street) parts.push(address.street);
+          if (address.district) parts.push(address.district);
+          if (address.city) parts.push(address.city);
+          if (address.region) parts.push(address.region);
+          if (address.country) parts.push(address.country);
+          locationName = parts.join(', ');
+        }
+      } catch (geocodeError) {
+        console.log('Geocoding error:', geocodeError);
+        locationName = `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
+      }
+
       return {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
+        locationName: locationName,
       };
     } catch (error) {
       console.log('Error getting location:', error);
@@ -287,16 +366,6 @@ const Vanamahotsav = () => {
     const newSpecies = {
       species: '',
       noOfPlants: '',
-      plantationType: '',
-      kmlFilePath: '',
-      plantationLength: '',
-      othersPlantationType: '',
-      plantationArea: '',
-      imageDetails: [{
-        imagePath: '',
-        latitude: null,
-        longitude: null,
-      }],
     };
     formik.setFieldValue('speciesDetails', [...currentSpecies, newSpecies]);
   };
@@ -312,46 +381,44 @@ const Vanamahotsav = () => {
     formik.setFieldValue('speciesDetails', newSpecies);
   };
 
-  // Add Image Field for a specific species
-  const addImageField = (speciesIndex) => {
-    const currentSpecies = formik.values.speciesDetails || [];
-    const species = currentSpecies[speciesIndex];
-    const currentImages = species.imageDetails || [];
+  // Add Image Field
+  const addImageField = () => {
+    const currentImages = formik.values.imageDetails || [];
     
     if (currentImages.length >= 15) {
-      Alert.alert('Limit Reached', 'Maximum 15 images allowed per species');
+      Alert.alert('Limit Reached', 'Maximum 15 images allowed');
       return;
     }
     
-    const newImages = [...currentImages, { imagePath: '', latitude: null, longitude: null }];
-    const updatedSpecies = [...currentSpecies];
-    updatedSpecies[speciesIndex].imageDetails = newImages;
-    formik.setFieldValue('speciesDetails', updatedSpecies);
+    const newImages = [...currentImages, { 
+      imagePath: '', 
+      latitude: null, 
+      longitude: null,
+      locationName: '' 
+    }];
+    formik.setFieldValue('imageDetails', newImages);
   };
 
   // Remove Image Field
-  const removeImageField = (speciesIndex, imageIndex) => {
-    const currentSpecies = formik.values.speciesDetails || [];
-    const species = currentSpecies[speciesIndex];
-    const currentImages = species.imageDetails || [];
+  const removeImageField = (index) => {
+    const currentImages = formik.values.imageDetails || [];
     
-    if (currentImages.length <= 1) {
-      Alert.alert('Cannot Remove', 'Minimum 1 image required per species');
+    if (currentImages.length <= 4) {
+      Alert.alert('Cannot Remove', 'Minimum 4 images required');
       return;
     }
     
-    const newImages = currentImages.filter((_, i) => i !== imageIndex);
-    const updatedSpecies = [...currentSpecies];
-    updatedSpecies[speciesIndex].imageDetails = newImages;
-    formik.setFieldValue('speciesDetails', updatedSpecies);
+    const newImages = currentImages.filter((_, i) => i !== index);
+    formik.setFieldValue('imageDetails', newImages);
   };
 
   // Handle image capture with location
-  const handleImageCapture = async (speciesIndex, imageIndex) => {
+  const handleImageCapture = async (index) => {
     const path = 'APFD/VANAMAHOTSAV/';
-    const imageFieldName = `speciesDetails[${speciesIndex}].imageDetails[${imageIndex}].imagePath`;
-    const latitudeFieldName = `speciesDetails[${speciesIndex}].imageDetails[${imageIndex}].latitude`;
-    const longitudeFieldName = `speciesDetails[${speciesIndex}].imageDetails[${imageIndex}].longitude`;
+    const imageFieldName = `imageDetails[${index}].imagePath`;
+    const latitudeFieldName = `imageDetails[${index}].latitude`;
+    const longitudeFieldName = `imageDetails[${index}].longitude`;
+    const locationNameFieldName = `imageDetails[${index}].locationName`;
     
     // Capture image
     await ImageBucketRN(
@@ -363,18 +430,18 @@ const Vanamahotsav = () => {
       dispatch
     );
     
-    // Get location with lat/long after image capture
-    const coords = await getLocationWithCoords();
-    if (coords) {
-      formik.setFieldValue(latitudeFieldName, coords.latitude);
-      formik.setFieldValue(longitudeFieldName, coords.longitude);
+    // Get location with details after image capture
+    const locationData = await getLocationWithDetails();
+    if (locationData) {
+      formik.setFieldValue(latitudeFieldName, locationData.latitude);
+      formik.setFieldValue(longitudeFieldName, locationData.longitude);
+      formik.setFieldValue(locationNameFieldName, locationData.locationName);
     }
   };
 
-  // Render Images for a specific species
-  const renderImages = (speciesIndex) => {
-    const species = formik.values.speciesDetails?.[speciesIndex];
-    const images = species?.imageDetails || [];
+  // Render Images
+  const renderImages = () => {
+    const images = formik.values.imageDetails || [];
     
     return (
       <View>
@@ -384,26 +451,26 @@ const Vanamahotsav = () => {
           </Text>
         </View>
 
-        {images.map((item, imageIndex) => {
-          const imageFieldName = `speciesDetails[${speciesIndex}].imageDetails[${imageIndex}].imagePath`;
-          const latitudeFieldName = `speciesDetails[${speciesIndex}].imageDetails[${imageIndex}].latitude`;
-          const longitudeFieldName = `speciesDetails[${speciesIndex}].imageDetails[${imageIndex}].longitude`;
+        {images.map((item, index) => {
+          const imageFieldName = `imageDetails[${index}].imagePath`;
+          const latitudeFieldName = `imageDetails[${index}].latitude`;
+          const longitudeFieldName = `imageDetails[${index}].longitude`;
+          const locationNameFieldName = `imageDetails[${index}].locationName`;
           
-          const imageError = formik.touched.speciesDetails?.[speciesIndex]?.imageDetails?.[imageIndex]?.imagePath && 
-                           formik.errors.speciesDetails?.[speciesIndex]?.imageDetails?.[imageIndex]?.imagePath;
-          const latError = formik.touched.speciesDetails?.[speciesIndex]?.imageDetails?.[imageIndex]?.latitude && 
-                          formik.errors.speciesDetails?.[speciesIndex]?.imageDetails?.[imageIndex]?.latitude;
-          const lngError = formik.touched.speciesDetails?.[speciesIndex]?.imageDetails?.[imageIndex]?.longitude && 
-                          formik.errors.speciesDetails?.[speciesIndex]?.imageDetails?.[imageIndex]?.longitude;
+          const imageError = formik.touched.imageDetails?.[index]?.imagePath && 
+                           formik.errors.imageDetails?.[index]?.imagePath;
+          const latError = formik.touched.imageDetails?.[index]?.latitude && 
+                          formik.errors.imageDetails?.[index]?.latitude;
+          const lngError = formik.touched.imageDetails?.[index]?.longitude && 
+                          formik.errors.imageDetails?.[index]?.longitude;
           
           return (
-            <View key={imageIndex} style={styles.imageFieldContainer}>
+            <View key={index} style={styles.imageFieldContainer}>
               <View style={styles.imageFieldHeader}>
-                <Text style={styles.imageFieldTitle}>Image {imageIndex + 1}</Text>
-                {images.length > 1 && (
+                {images.length > 4 && (
                   <TouchableOpacity
                     style={styles.removeImageButton}
-                    onPress={() => removeImageField(speciesIndex, imageIndex)}
+                    onPress={() => removeImageField(index)}
                   >
                     <Text style={styles.removeIcon}>❌</Text>
                   </TouchableOpacity>
@@ -415,9 +482,9 @@ const Vanamahotsav = () => {
                   styles.uploadButton,
                   imageError && styles.inputError,
                 ]}
-                onPress={() => handleImageCapture(speciesIndex, imageIndex)}
+                onPress={() => handleImageCapture(index)}
               >
-                <Text style={styles.uploadButtonText}>📷 Capture Image {imageIndex + 1}</Text>
+                <Text style={styles.uploadButtonText}>📷 Corner Image {index + 1}</Text>
               </TouchableOpacity>
               
               {imageError && (
@@ -428,14 +495,17 @@ const Vanamahotsav = () => {
                 <View style={styles.previewContainer}>
                   <Image source={{ uri: item.imagePath }} style={styles.previewImage} />
                   
-                  {/* Location displayed below the image */}
                   <View style={styles.locationContainer}>
                     <View style={styles.locationBox}>
                       <Text style={styles.locationEmoji}>📍</Text>
-                      <Text style={styles.locationText} numberOfLines={2}>
-                        Lat: {item.latitude?.toFixed(6) || 'N/A'}, 
-                        Lng: {item.longitude?.toFixed(6) || 'N/A'}
-                      </Text>
+                      <View style={styles.locationTextContainer}>
+                        <Text style={styles.locationText} numberOfLines={3}>
+                          {item.locationName || 'Fetching location...'}
+                        </Text>
+                        <Text style={styles.coordinatesText}>
+                          Lat: {item.latitude?.toFixed(6) || 'N/A'}, Lng: {item.longitude?.toFixed(6) || 'N/A'}
+                        </Text>
+                      </View>
                     </View>
                     {(latError || lngError) && (
                       <Text style={styles.errorText}>
@@ -452,13 +522,12 @@ const Vanamahotsav = () => {
         <View style={{display:"flex", justifyContent:"flex-end"}}>
           <TouchableOpacity
             style={styles.addImageButton}
-            onPress={() => addImageField(speciesIndex)}
+            onPress={addImageField}
           >
             <Text style={styles.addIcon}>➕</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Show count */}
         <View style={styles.imageCountContainer}>
           <Text style={styles.imageCountText}>
             {images.length} / 15 Images
@@ -509,7 +578,7 @@ const Vanamahotsav = () => {
                     style={styles.picker}
                   >
                     <Picker.Item label="---select---" value="" />
-                    {speciesList?.map((d) => ( // Changed from species to speciesList
+                    {speciesList?.map((d) => (
                       <Picker.Item key={d.id} label={d.species_scientific_name} value={String(d.id)} />
                     ))}
                     <Picker.Item label="Others" value="999" />
@@ -557,107 +626,16 @@ const Vanamahotsav = () => {
                   <Text style={styles.errorText}>{speciesErrors.noOfPlants}</Text>
                 )}
               </View>
-
-              {/* Plantation Type */}
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Plantation Type <Text style={styles.star}>*</Text></Text>
-                <View style={[
-                  styles.pickerContainer,
-                  speciesTouched.plantationType && speciesErrors.plantationType && styles.inputError
-                ]}>
-                  <Picker
-                    selectedValue={species.plantationType}
-                    onValueChange={(itemValue) => {
-                      const updatedSpecies = [...speciesDetails];
-                      updatedSpecies[speciesIndex].plantationType = itemValue;
-                      updatedSpecies[speciesIndex].kmlFilePath = '';
-                      updatedSpecies[speciesIndex].plantationLength = '';
-                      updatedSpecies[speciesIndex].othersPlantationType = '';
-                      updatedSpecies[speciesIndex].plantationArea = '';
-                      formik.setFieldValue('speciesDetails', updatedSpecies);
-                    }}
-                    style={styles.picker}
-                  >
-                    <Picker.Item label="--Select--" value="" />
-                    <Picker.Item label="Block Plantation" value="1" />
-                    <Picker.Item label="Avenue Plantation" value="2" />
-                    <Picker.Item label="Bund / Canal Plantation" value="3" />
-                    <Picker.Item label="Agro Forestry / Horticulture" value="4" />
-                    <Picker.Item label="Others" value="5" />
-                  </Picker>
-                </View>
-                {speciesTouched.plantationType && speciesErrors.plantationType && (
-                  <Text style={styles.errorText}>{speciesErrors.plantationType}</Text>
-                )}
-              </View>
-
-              {/* Others Plantation Type */}
-              {species.plantationType === '5' && (
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Other Plantation Type <Text style={styles.star}>*</Text></Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      speciesTouched.othersPlantationType && speciesErrors.othersPlantationType && styles.inputError,
-                    ]}
-                    placeholder="Enter other plantation type"
-                    value={species.othersPlantationType}
-                    onChangeText={(text) => {
-                      const updatedSpecies = [...speciesDetails];
-                      updatedSpecies[speciesIndex].othersPlantationType = text;
-                      formik.setFieldValue('speciesDetails', updatedSpecies);
-                    }}
-                    onBlur={() => {
-                      formik.setFieldTouched(`speciesDetails[${speciesIndex}].othersPlantationType`, true);
-                    }}
-                  />
-                  {speciesTouched.othersPlantationType && speciesErrors.othersPlantationType && (
-                    <Text style={styles.errorText}>{speciesErrors.othersPlantationType}</Text>
-                  )}
-                </View>
-              )}
-
-              {/* Area - Only for Block Plantation and Agro Forestry */}
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Area (Ha) <Text style={styles.star}>*</Text></Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      speciesTouched.plantationArea && speciesErrors.plantationArea && styles.inputError,
-                    ]}
-                    placeholder="Enter area in hectares"
-                    keyboardType="numeric"
-                    value={species.plantationArea}
-                    onChangeText={(text) => {
-                      const updatedSpecies = [...speciesDetails];
-                      updatedSpecies[speciesIndex].plantationArea = text;
-                      formik.setFieldValue('speciesDetails', updatedSpecies);
-                    }}
-                    onBlur={() => {
-                      formik.setFieldTouched(`speciesDetails[${speciesIndex}].plantationArea`, true);
-                    }}
-                  />
-                  {speciesTouched.plantationArea && speciesErrors.plantationArea && (
-                    <Text style={styles.errorText}>{speciesErrors.plantationArea}</Text>
-                  )}
-                </View>
-
-              {/* KML File / Plantation Length */}
-              
-
-              {/* Dynamic Images */}
-              {renderImages(speciesIndex)}
             </View>
           );
         })}
         
-        {/* Add Species Button */}
-        {/* <TouchableOpacity
+        <TouchableOpacity
           style={styles.addSpeciesButton}
           onPress={addSpeciesField}
         >
           <Text style={styles.addSpeciesButtonText}>➕ Add Another Species</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
     );
   };
@@ -785,6 +763,25 @@ const Vanamahotsav = () => {
                     <Text style={styles.errorText}>{formik.errors.block}</Text>
                   )}
                 </View>
+
+                {/* Area - Forest only */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Area (Ha) <Text style={styles.star}>*</Text></Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      formik.touched.area && formik.errors.area && styles.inputError,
+                    ]}
+                    placeholder="Enter area in hectares"
+                    keyboardType="numeric"
+                    value={formik.values.area}
+                    onChangeText={formik.handleChange('area')}
+                    onBlur={formik.handleBlur('area')}
+                  />
+                  {formik.touched.area && formik.errors.area && (
+                    <Text style={styles.errorText}>{formik.errors.area}</Text>
+                  )}
+                </View>
               </>
             )}
 
@@ -903,23 +900,175 @@ const Vanamahotsav = () => {
               )}
             </View>
 
-            {/* Landmark */}
+            {/* Plantation Type - Top level (Voluntary) */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Location / Landmark <Text style={styles.star}>*</Text></Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  formik.touched.landmark && formik.errors.landmark && styles.inputError,
-                ]}
-                placeholder="Enter Location / Landmark"
-                value={formik.values.landmark}
-                onChangeText={formik.handleChange('landmark')}
-                onBlur={formik.handleBlur('landmark')}
-              />
-              {formik.touched.landmark && formik.errors.landmark && (
-                <Text style={styles.errorText}>{formik.errors.landmark}</Text>
+              <Text style={styles.label}>Plantation Type <Text style={styles.star}>*</Text></Text>
+              <View style={[
+                styles.pickerContainer,
+                formik.touched.plantationType && formik.errors.plantationType && styles.inputError
+              ]}>
+                <Picker
+                  selectedValue={formik.values.plantationType}
+                  onValueChange={(itemValue) => {
+                    formik.setFieldValue('plantationType', itemValue);
+                    formik.setFieldValue('othersPlantationType', '');
+                  }}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="--Select--" value="" />
+                  <Picker.Item label="Block Plantation" value="1" />
+                  <Picker.Item label="Avenue Plantation" value="2" />
+                  <Picker.Item label="Bund / Canal Plantation" value="3" />
+                  <Picker.Item label="Agro Forestry / Horticulture" value="4" />
+                  <Picker.Item label="Others" value="5" />
+                </Picker>
+              </View>
+              {formik.touched.plantationType && formik.errors.plantationType && (
+                <Text style={styles.errorText}>{formik.errors.plantationType}</Text>
               )}
             </View>
+
+            {/* Others Plantation Type */}
+            {formik.values.plantationType === '5' && (
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Other Plantation Type <Text style={styles.star}>*</Text></Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    formik.touched.othersPlantationType && formik.errors.othersPlantationType && styles.inputError,
+                  ]}
+                  placeholder="Enter other plantation type"
+                  value={formik.values.othersPlantationType}
+                  onChangeText={formik.handleChange('othersPlantationType')}
+                  onBlur={formik.handleBlur('othersPlantationType')}
+                />
+                {formik.touched.othersPlantationType && formik.errors.othersPlantationType && (
+                  <Text style={styles.errorText}>{formik.errors.othersPlantationType}</Text>
+                )}
+              </View>
+            )}
+
+            {/* Landmark - Not mandatory for forest */}
+            {locationType !== 'forest' && (
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Location / Landmark <Text style={styles.star}>*</Text></Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    formik.touched.landmark && formik.errors.landmark && styles.inputError,
+                  ]}
+                  placeholder="Enter Location / Landmark"
+                  value={formik.values.landmark}
+                  onChangeText={formik.handleChange('landmark')}
+                  onBlur={formik.handleBlur('landmark')}
+                />
+                {formik.touched.landmark && formik.errors.landmark && (
+                  <Text style={styles.errorText}>{formik.errors.landmark}</Text>
+                )}
+              </View>
+            )}
+
+            {/* Non-Forest specific fields */}
+            {locationType === 'nonforest' && (
+              <>
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Land Type <Text style={styles.star}>*</Text></Text>
+                  <View style={[
+                    styles.pickerContainer,
+                    formik.touched.landType && formik.errors.landType && styles.inputError
+                  ]}>
+                    <Picker
+                      selectedValue={formik.values.landType}
+                      onValueChange={(itemValue) => {
+                        formik.setFieldValue('landType', itemValue);
+                      }}
+                      style={styles.picker}
+                    >
+                      <Picker.Item label="--Select--" value="" />
+                      <Picker.Item label="Patta" value="patta" />
+                      <Picker.Item label="Govt/Poramboku" value="govt_poramboku" />
+                    </Picker>
+                  </View>
+                  {formik.touched.landType && formik.errors.landType && (
+                    <Text style={styles.errorText}>{formik.errors.landType}</Text>
+                  )}
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Incharge Name <Text style={styles.star}>*</Text></Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      formik.touched.inchargeName && formik.errors.inchargeName && styles.inputError,
+                    ]}
+                    placeholder="Enter incharge name"
+                    value={formik.values.inchargeName}
+                    onChangeText={formik.handleChange('inchargeName')}
+                    onBlur={formik.handleBlur('inchargeName')}
+                  />
+                  {formik.touched.inchargeName && formik.errors.inchargeName && (
+                    <Text style={styles.errorText}>{formik.errors.inchargeName}</Text>
+                  )}
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Designation <Text style={styles.star}>*</Text></Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      formik.touched.inchargeDesignation && formik.errors.inchargeDesignation && styles.inputError,
+                    ]}
+                    placeholder="Enter designation"
+                    value={formik.values.inchargeDesignation}
+                    onChangeText={formik.handleChange('inchargeDesignation')}
+                    onBlur={formik.handleBlur('inchargeDesignation')}
+                  />
+                  {formik.touched.inchargeDesignation && formik.errors.inchargeDesignation && (
+                    <Text style={styles.errorText}>{formik.errors.inchargeDesignation}</Text>
+                  )}
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Mobile Number <Text style={styles.star}>*</Text></Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      formik.touched.inchargeMobile && formik.errors.inchargeMobile && styles.inputError,
+                    ]}
+                    placeholder="Enter 10 digit mobile number"
+                    keyboardType="phone-pad"
+                    maxLength={10}
+                    value={formik.values.inchargeMobile}
+                    onChangeText={(text) => {
+                      const numericText = text.replace(/[^0-9]/g, '');
+                      formik.setFieldValue('inchargeMobile', numericText);
+                    }}
+                    onBlur={formik.handleBlur('inchargeMobile')}
+                  />
+                  {formik.touched.inchargeMobile && formik.errors.inchargeMobile && (
+                    <Text style={styles.errorText}>{formik.errors.inchargeMobile}</Text>
+                  )}
+                </View>
+
+                {/* Landmark for non-forest */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Location / Landmark <Text style={styles.star}>*</Text></Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      formik.touched.landmark && formik.errors.landmark && styles.inputError,
+                    ]}
+                    placeholder="Enter Location / Landmark"
+                    value={formik.values.landmark}
+                    onChangeText={formik.handleChange('landmark')}
+                    onBlur={formik.handleBlur('landmark')}
+                  />
+                  {formik.touched.landmark && formik.errors.landmark && (
+                    <Text style={styles.errorText}>{formik.errors.landmark}</Text>
+                  )}
+                </View>
+              </>
+            )}
 
             {/* Scheme (Forest only) */}
             {locationType === 'forest' && (
@@ -958,6 +1107,16 @@ const Vanamahotsav = () => {
               {renderSpeciesDetails()}
             </View>
 
+            {/* Images Section - Top Level */}
+            <View style={styles.imagesSection}>
+              <View style={styles.imagesHeader}>
+                <Text style={styles.imagesEmoji}>📸</Text>
+                <Text style={styles.imagesTitle}>Plantation Photos</Text>
+              </View>
+
+              {renderImages()}
+            </View>
+
             {/* Submit Button */}
             <TouchableOpacity
               style={[styles.submitButton, loading && styles.disabledButton]}
@@ -973,7 +1132,6 @@ const Vanamahotsav = () => {
                         touchAllFields(item, `${fieldName}[${index}]`);
                       });
                     } else if (!prefix && key === 'speciesDetails') {
-                      // Handle speciesDetails array
                       obj[key].forEach((item, index) => {
                         touchAllFields(item, `${fieldName}[${index}]`);
                       });
@@ -1156,6 +1314,9 @@ const styles = StyleSheet.create({
   removeSpeciesButton: {
     padding: 4,
   },
+  removeIcon: {
+    fontSize: 24,
+  },
   subLabel: {
     fontSize: 14,
     fontWeight: '600',
@@ -1165,6 +1326,27 @@ const styles = StyleSheet.create({
   imageHeaderContainer: {
     marginTop: 12,
     marginBottom: 8,
+  },
+  imagesSection: {
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  imagesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2e7d32',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  imagesEmoji: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  imagesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   imageFieldContainer: {
     backgroundColor: '#fff',
@@ -1187,9 +1369,6 @@ const styles = StyleSheet.create({
   },
   removeImageButton: {
     padding: 4,
-  },
-  removeIcon: {
-    fontSize: 24,
   },
   uploadButton: {
     flexDirection: 'row',
@@ -1221,16 +1400,24 @@ const styles = StyleSheet.create({
   },
   locationBox: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: '#e8f5e9',
     padding: 8,
     borderRadius: 6,
   },
+  locationTextContainer: {
+    flex: 1,
+    marginLeft: 4,
+  },
   locationText: {
     fontSize: 12,
     color: '#2e7d32',
-    marginLeft: 4,
-    flex: 1,
+    fontWeight: '500',
+  },
+  coordinatesText: {
+    fontSize: 11,
+    color: '#555',
+    marginTop: 2,
   },
   addImageButton: {
     flexDirection: 'row',
