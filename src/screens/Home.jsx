@@ -28,7 +28,7 @@ import {
 } from '../utils/utils';
 import ImageBucketRN from '../utils/ImageBucketRN';
 import { GetSpecies, GetNewMandals, new_dist, NewVillages, GetBeat, GetCompartment, GetBlock } from '../utils/CommonFunctions';
-
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 const Vanamahotsav = () => {
   const dispatch = useDispatch();
   const state = useSelector((s) => s.LoginReducer);
@@ -490,19 +490,26 @@ const Vanamahotsav = () => {
   </TouchableOpacity>
 
   {images.length > 4 && (
-    <TouchableOpacity
-      onPress={() => removeImageField(index)}
-      style={{
-        marginLeft: 5,
-        padding: 2,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-    <Text style={{ color: "red", fontSize: 22 }}>🗑</Text>
-
-    </TouchableOpacity>
-  )}
+  <TouchableOpacity
+    onPress={() => removeImageField(index)}
+    style={{
+      marginLeft: 5,
+      width: 30,
+      height: 30,
+      borderRadius: 8,
+      backgroundColor: "#FF3B30",
+      justifyContent: "center",
+      alignItems: "center",
+      shadowColor: "#FF3B30",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 4,
+    }}
+  >
+    <Icon name="trash-can-outline" size={18} color="white" />
+  </TouchableOpacity>
+)}
 </View>
               
               {imageError && (

@@ -43,7 +43,7 @@ import UserMessage from "./UserMessage";
 import Icon from "react-native-vector-icons/Feather";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
-import labour_logo from "../../assets/logo2.png";
+import labour_logo from "../../assets/harithalogo.png";
 
 const { width, height } = Dimensions.get("window");
 

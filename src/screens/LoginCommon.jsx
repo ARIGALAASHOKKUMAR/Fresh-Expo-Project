@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   fieldBlock: {
-    marginBottom: 5,
+    marginBottom: 8,
   },
   inputWrapper: {
     minHeight: 34,
