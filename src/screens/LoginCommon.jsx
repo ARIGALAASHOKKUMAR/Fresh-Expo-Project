@@ -165,7 +165,7 @@ const LoginCommon = () => {
       <ImageBackground 
 source={require('../../assets/harithalatest.png')}
   style={styles.screen}
-  contentFit="cover"
+  contentFit="contain"
 >
       <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
@@ -182,7 +182,7 @@ source={require('../../assets/harithalatest.png')}
           {/* Background Decorations */}
           
           {/* Card */}
-          <View style={{marginTop:550}}>
+          <View style={{marginTop:420}}>
             {/* Logo */}
             
 
@@ -416,10 +416,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   fieldBlock: {
-    marginBottom: 16,
+    marginBottom: 5,
   },
   inputWrapper: {
-    minHeight: 54,
+    minHeight: 34,
     backgroundColor: '#f8fafc',
     borderRadius: 16,
     paddingHorizontal: 16,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   captchaInputWrapper: {
     flex: 1.2,
-    minHeight: 54,
+    minHeight: 34,
     backgroundColor: '#f8fafc',
     borderRadius: 16,
     paddingHorizontal: 16,
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     width: '100%',
-    height: 56,
+    height: 46,
     backgroundColor: 'green',
     borderRadius: 16,
     justifyContent: 'center',

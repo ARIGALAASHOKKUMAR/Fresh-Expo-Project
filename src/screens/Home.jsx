@@ -278,6 +278,24 @@ const Vanamahotsav = () => {
           longitude: null,
           locationName: '',
         },
+        {
+          imagePath: '',
+          latitude: null,
+          longitude: null,
+          locationName: '',
+        },
+        {
+          imagePath: '',
+          latitude: null,
+          longitude: null,
+          locationName: '',
+        },
+        {
+          imagePath: '',
+          latitude: null,
+          longitude: null,
+          locationName: '',
+        },
         
       ],
     },
@@ -449,26 +467,43 @@ const Vanamahotsav = () => {
           
           return (
             <View key={index} style={styles.imageFieldContainer}>
-              <View style={styles.imageFieldHeader}>
-                {images.length > 4 && (
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => removeImageField(index)}
-                  >
-                    <Text style={styles.removeIcon}>❌</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              
+              <View
+  style={{
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  }}
+>
+  <TouchableOpacity
+    style={[
+      styles.uploadButton,
+      imageError && styles.inputError,
+      { flex: 1 } // Take remaining width
+    ]}
+    onPress={() => handleImageCapture(index)}
+  >
+    <Text style={styles.uploadButtonText}>
+      📷 Corner Image {index + 1}
+    </Text>
+  </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.uploadButton,
-                  imageError && styles.inputError,
-                ]}
-                onPress={() => handleImageCapture(index)}
-              >
-                <Text style={styles.uploadButtonText}>📷 Corner Image {index + 1}</Text>
-              </TouchableOpacity>
+  {images.length > 4 && (
+    <TouchableOpacity
+      onPress={() => removeImageField(index)}
+      style={{
+        marginLeft: 5,
+        padding: 2,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+    <Text style={{ color: "red", fontSize: 22 }}>🗑</Text>
+
+    </TouchableOpacity>
+  )}
+</View>
               
               {imageError && (
                 <Text style={styles.errorText}>{imageError}</Text>
@@ -504,10 +539,10 @@ const Vanamahotsav = () => {
         
         <View style={{display:"flex", justifyContent:"flex-end"}}>
           <TouchableOpacity
-            style={styles.addImageButton}
+            style={styles.addSpeciesButton}
             onPress={addImageField}
           >
-            <Text style={styles.addIcon}>➕</Text>
+           <Text style={styles.addSpeciesButtonText}>➕ Add Another Image</Text>
           </TouchableOpacity>
         </View>
 

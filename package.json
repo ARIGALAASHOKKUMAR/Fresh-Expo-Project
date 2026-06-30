@@ -9,6 +9,8 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.3.0",
+    "@fortawesome/react-native-fontawesome": "^1.0.0",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@react-native-community/datetimepicker": "8.6.0",
     "@react-native-picker/picker": "^2.11.4",
@@ -25,6 +27,7 @@
     "react": "19.2.0",
     "react-native": "0.83.6",
     "react-native-sprinkle-toast": "^1.0.2",
+    "react-native-svg": "^15.15.5",
     "react-native-vector-icons": "^10.3.0",
     "react-redux": "^9.3.0",
     "react-timer-hook": "^4.0.6",
