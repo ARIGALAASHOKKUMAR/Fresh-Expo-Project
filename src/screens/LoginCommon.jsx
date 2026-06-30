@@ -134,10 +134,10 @@ const LoginCommon = () => {
 
         const currentTime = new Date().getHours();
         let welcomeMsg = currentTime >= 5 && currentTime < 12
-          ? 'Good morning! Welcome to Marine Discharge'
+          ? 'Good morning! Welcome to Haritha Andhra'
           : currentTime >= 12 && currentTime < 18
-            ? 'Good afternoon! Welcome to Marine Discharge'
-            : 'Good evening! Welcome to Marine Discharge';
+            ? 'Good afternoon! Welcome to Haritha Andhra'
+            : 'Good evening! Welcome to Haritha Andhra';
 
         showSuccessToast(welcomeMsg);
         navigation.navigate('HOME');
@@ -163,7 +163,7 @@ const LoginCommon = () => {
   return (
     <View style={styles.screen}>
       <ImageBackground 
-source={require('../../assets/image.png')}
+source={require('../../assets/harithalatest.png')}
   style={styles.screen}
   contentFit="cover"
 >
@@ -182,7 +182,7 @@ source={require('../../assets/image.png')}
           {/* Background Decorations */}
           
           {/* Card */}
-          <View style={{marginTop:350}}>
+          <View style={{marginTop:550}}>
             {/* Logo */}
             
 

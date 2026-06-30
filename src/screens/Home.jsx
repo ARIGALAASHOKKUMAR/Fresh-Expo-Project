@@ -278,24 +278,7 @@ const Vanamahotsav = () => {
           longitude: null,
           locationName: '',
         },
-        {
-          imagePath: '',
-          latitude: null,
-          longitude: null,
-          locationName: '',
-        },
-        {
-          imagePath: '',
-          latitude: null,
-          longitude: null,
-          locationName: '',
-        },
-        {
-          imagePath: '',
-          latitude: null,
-          longitude: null,
-          locationName: '',
-        }
+        
       ],
     },
     validationSchema: validationSchema,
@@ -447,7 +430,7 @@ const Vanamahotsav = () => {
       <View>
         <View style={styles.imageHeaderContainer}>
           <Text style={styles.subLabel}>
-            Upload Images (Min: 4, Max: 15) <Text style={styles.star}>*</Text>
+            Upload Images (Max: 6) <Text style={styles.star}>*</Text>
           </Text>
         </View>
 
@@ -528,11 +511,7 @@ const Vanamahotsav = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.imageCountContainer}>
-          <Text style={styles.imageCountText}>
-            {images.length} / 15 Images
-          </Text>
-        </View>
+       
       </View>
     );
   };
@@ -765,23 +744,6 @@ const Vanamahotsav = () => {
                 </View>
 
                 {/* Area - Forest only */}
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Area (Ha) <Text style={styles.star}>*</Text></Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      formik.touched.area && formik.errors.area && styles.inputError,
-                    ]}
-                    placeholder="Enter area in hectares"
-                    keyboardType="numeric"
-                    value={formik.values.area}
-                    onChangeText={formik.handleChange('area')}
-                    onBlur={formik.handleBlur('area')}
-                  />
-                  {formik.touched.area && formik.errors.area && (
-                    <Text style={styles.errorText}>{formik.errors.area}</Text>
-                  )}
-                </View>
               </>
             )}
 
@@ -842,7 +804,7 @@ const Vanamahotsav = () => {
 
             {/* Village */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Village <Text style={styles.star}>*</Text></Text>
+              <Text style={styles.label}>Village Limit <Text style={styles.star}>*</Text></Text>
               <View style={[
                 styles.pickerContainer,
                 formik.touched.villageCode && formik.errors.villageCode && styles.inputError
@@ -927,6 +889,29 @@ const Vanamahotsav = () => {
                 <Text style={styles.errorText}>{formik.errors.plantationType}</Text>
               )}
             </View>
+
+               {locationType === 'forest' && (
+
+             <View style={styles.formGroup}>
+                  <Text style={styles.label}>Area (Ha) <Text style={styles.star}>*</Text></Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      formik.touched.area && formik.errors.area && styles.inputError,
+                    ]}
+                    placeholder="Enter area in hectares"
+                    keyboardType="numeric"
+                    value={formik.values.area}
+                    onChangeText={formik.handleChange('area')}
+                    onBlur={formik.handleBlur('area')}
+                  />
+                  {formik.touched.area && formik.errors.area && (
+                    <Text style={styles.errorText}>{formik.errors.area}</Text>
+                  )}
+                </View>
+             )}
+
+               
 
             {/* Others Plantation Type */}
             {formik.values.plantationType === '5' && (
@@ -1233,6 +1218,7 @@ const styles = StyleSheet.create({
   picker: {
     height: 50,
     width: '100%',
+    color:"black"
   },
   input: {
     borderWidth: 1,
