@@ -864,55 +864,64 @@ const Vanamahotsav = () => {
 
             {/* Plantation Type - Top level (Voluntary) */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Plantation Type <Text style={styles.star}>*</Text></Text>
-              <View style={[
-                styles.pickerContainer,
-                formik.touched.plantationType && formik.errors.plantationType && styles.inputError
-              ]}>
-                <Picker
-                  selectedValue={formik.values.plantationType}
-                  onValueChange={(itemValue) => {
-                    formik.setFieldValue('plantationType', itemValue);
-                    formik.setFieldValue('othersPlantationType', '');
-                  }}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="--Select--" value="" />
-                  <Picker.Item label="Block Plantation" value="1" />
-                  <Picker.Item label="Avenue Plantation" value="2" />
-                  <Picker.Item label="Bund / Canal Plantation" value="3" />
-                  <Picker.Item label="Agro Forestry / Horticulture" value="4" />
-                  <Picker.Item label="Others" value="5" />
-                </Picker>
-              </View>
-              {formik.touched.plantationType && formik.errors.plantationType && (
-                <Text style={styles.errorText}>{formik.errors.plantationType}</Text>
-              )}
-            </View>
+  <Text style={styles.label}>Plantation Type <Text style={styles.star}>*</Text></Text>
+  <View style={[
+    styles.pickerContainer,
+    formik.touched.plantationType && formik.errors.plantationType && styles.inputError
+  ]}>
+    <Picker
+      selectedValue={formik.values.plantationType}
+      onValueChange={(itemValue) => {
+        formik.setFieldValue('plantationType', itemValue);
+        formik.setFieldValue('othersPlantationType', '');
+        // Reset area value when plantation type changes
+        formik.setFieldValue('area', '');
+      }}
+      style={styles.picker}
+    >
+      <Picker.Item label="--Select--" value="" />
+      <Picker.Item label="Block Plantation" value="1" />
+      <Picker.Item label="Avenue Plantation" value="2" />
+      <Picker.Item label="Bund / Canal Plantation" value="3" />
+      <Picker.Item label="Agro Forestry / Horticulture" value="4" />
+      <Picker.Item label="Others" value="5" />
+    </Picker>
+  </View>
+  {formik.touched.plantationType && formik.errors.plantationType && (
+    <Text style={styles.errorText}>{formik.errors.plantationType}</Text>
+  )}
+</View>
 
-               {locationType === 'forest' && (
-
-             <View style={styles.formGroup}>
-                  <Text style={styles.label}>Area (Ha) <Text style={styles.star}>*</Text></Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      formik.touched.area && formik.errors.area && styles.inputError,
-                    ]}
-                    placeholder="Enter area in hectares"
-                    keyboardType="numeric"
-                    value={formik.values.area}
-                    onChangeText={formik.handleChange('area')}
-                    onBlur={formik.handleBlur('area')}
-                  />
-                  {formik.touched.area && formik.errors.area && (
-                    <Text style={styles.errorText}>{formik.errors.area}</Text>
-                  )}
-                </View>
-             )}
-
-               
-
+{/* Area field - conditionally show based on plantation type and location */}
+{(locationType === 'forest' || 
+  ['2', '3'].includes(formik.values.plantationType)) && (
+  <View style={styles.formGroup}>
+    <Text style={styles.label}>
+      {formik.values.plantationType === '2' || formik.values.plantationType === '3' 
+        ? 'Length (Km)' 
+        : 'Area (Ha)'} 
+      <Text style={styles.star}>*</Text>
+    </Text>
+    <TextInput
+      style={[
+        styles.input,
+        formik.touched.area && formik.errors.area && styles.inputError,
+      ]}
+      placeholder={
+        formik.values.plantationType === '2' || formik.values.plantationType === '3'
+          ? "Enter length in kilometers"
+          : "Enter area in hectares"
+      }
+      keyboardType="numeric"
+      value={formik.values.area}
+      onChangeText={formik.handleChange('area')}
+      onBlur={formik.handleBlur('area')}
+    />
+    {formik.touched.area && formik.errors.area && (
+      <Text style={styles.errorText}>{formik.errors.area}</Text>
+    )}
+  </View>
+)}
             {/* Others Plantation Type */}
             {formik.values.plantationType === '5' && (
               <View style={styles.formGroup}>
