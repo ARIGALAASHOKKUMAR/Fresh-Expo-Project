@@ -679,7 +679,7 @@ const Vanamahotsav = () => {
               </Text>
               <Text style={styles.locationTypeLabel}>Location Type:</Text>
               <Text style={styles.locationTypeValue}>
-                {locationType === 'forest' ? 'Forest' : 'Non-Forest'}
+                {locationType === 'forest' ? 'Forest' : 'Non-Forest(Outside Forest)'}
               </Text>
             </View>
 
@@ -926,6 +926,7 @@ const Vanamahotsav = () => {
       <Picker.Item label="Avenue Plantation" value="2" />
       <Picker.Item label="Bund / Canal Plantation" value="3" />
       <Picker.Item label="Agro Forestry / Horticulture" value="4" />
+      <Picker.Item label="Institutional" value="5" />
       <Picker.Item label="Others" value="5" />
     </Picker>
   </View>
