@@ -440,6 +440,9 @@ const Vanamahotsav = () => {
     }
   };
 
+   const ordinals = ['First', 'Second', 'Third', 'Fourth', 'Fifth',"Sixth"];
+
+
   // Render Images
   const renderImages = () => {
     const images = formik.values.imageDetails || [];
@@ -484,9 +487,10 @@ const Vanamahotsav = () => {
     ]}
     onPress={() => handleImageCapture(index)}
   >
-    <Text style={styles.uploadButtonText}>
-      📷 Corner Image {index + 1}
-    </Text>
+
+<Text style={styles.uploadButtonText}>
+  📷 {ordinals[index]} Corner Image
+</Text>
   </TouchableOpacity>
 
   {images.length > 4 && (
