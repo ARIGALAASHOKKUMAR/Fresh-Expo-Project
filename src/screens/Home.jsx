@@ -681,7 +681,7 @@ const Vanamahotsav = () => {
               <Text style={styles.locationEmoji}>
                 {locationType === 'forest' ? '🌲' : '🏠'}
               </Text>
-              <Text style={styles.locationTypeLabel}>Location Type:</Text>
+              <Text style={styles.locationTypeLabel}>Location:</Text>
               <Text style={styles.locationTypeValue}>
                 {locationType === 'forest' ? 'Forest' : 'Non-Forest(Outside Forest)'}
               </Text>
@@ -1093,22 +1093,7 @@ const Vanamahotsav = () => {
                 </View>
 
                 {/* Landmark for non-forest */}
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Location / Landmark <Text style={styles.star}>*</Text></Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      formik.touched.landmark && formik.errors.landmark && styles.inputError,
-                    ]}
-                    placeholder="Enter Location / Landmark"
-                    value={formik.values.landmark}
-                    onChangeText={formik.handleChange('landmark')}
-                    onBlur={formik.handleBlur('landmark')}
-                  />
-                  {formik.touched.landmark && formik.errors.landmark && (
-                    <Text style={styles.errorText}>{formik.errors.landmark}</Text>
-                  )}
-                </View>
+               
               </>
             )}
 
