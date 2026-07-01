@@ -224,6 +224,7 @@ payload.area = values.area ? Number(values.area) : null;
         imagePath: img.imagePath,
         latitude: Number(img.latitude) || null,
         longitude: Number(img.longitude) || null,
+        locationName:img.locationName
       }));
 
       // Remove null values
