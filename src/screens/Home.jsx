@@ -666,7 +666,7 @@ const Vanamahotsav = () => {
       <View>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>
-            🌿 Vana Mahotsav
+            🌿 Mission Haritha Andhra
           </Text>
         </View>
          

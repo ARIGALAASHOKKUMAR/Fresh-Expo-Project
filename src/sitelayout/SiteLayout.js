@@ -409,7 +409,7 @@ const SiteLayout = ({
 
           <View style={styles.headerRight}>
 
-            <Text style={{color:"white",fontWeight:"bold",marginRight:"60px"}}>Welcome:{username}{" "}</Text>
+            <Text style={{color:"white",fontWeight:"bold",marginRight:"60px"}}>Welcome:{roleName}-{username}{" "}</Text>
           </View>
           {showProfile && (
               <TouchableOpacity
