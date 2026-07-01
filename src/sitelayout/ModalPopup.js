@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     maxHeight: "80%",
     backgroundColor: "#ffffff",
-    borderRadius: 22,
+    borderRadius: 3,
     overflow: "hidden", // important for full header color
     elevation: 10,
   },
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#4a6cf7",
+    backgroundColor: "green",
     paddingHorizontal: 18,
     paddingVertical: 14,
   },
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
 
   closeButton: {
     margin: 16,
-    backgroundColor: "#2563EB",
+    backgroundColor: "green",
     paddingVertical: 13,
     borderRadius: 14,
     justifyContent: "center",

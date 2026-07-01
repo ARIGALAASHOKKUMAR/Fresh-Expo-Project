@@ -451,7 +451,7 @@ const Vanamahotsav = () => {
       <View>
         <View style={styles.imageHeaderContainer}>
           <Text style={styles.subLabel}>
-            Upload Images (Max: 6) <Text style={styles.star}>*</Text>
+            Upload Images (Min: 4,Max: 6) <Text style={styles.star}>*</Text>
           </Text>
         </View>
 
