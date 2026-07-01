@@ -195,7 +195,7 @@ const Vanamahotsav = () => {
           noOfPlants: Number(species.noOfPlants),
         }))
       };
-
+payload.area = values.area ? Number(values.area) : null;
       // Add forest specific fields
       if (values.locationType === 'forest') {
         payload.section = values.section ? Number(values.section) : null;
@@ -203,7 +203,7 @@ const Vanamahotsav = () => {
         payload.compartment = values.compartment ? Number(values.compartment) : null;
         payload.block = values.block ? Number(values.block) : null;
         payload.scheme = values.scheme ? Number(values.scheme) : null;
-        payload.area = values.area ? Number(values.area) : null;
+        
         if (values.landmark) payload.landmark = values.landmark;
       } else {
         // Non-forest specific fields
