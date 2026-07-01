@@ -17,6 +17,8 @@ import {
   View,
   StatusBar,
   FlatList,
+  BackHandler,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
@@ -241,7 +243,7 @@ const SiteLayout = ({
             url: parent.targeturl,
           });
         } else {
-          console.log("Parent pressedsdfdfdfddfdkofcjdslkdld:", parent);
+          console.log("Parent pressedsdfdfdfddfkofcjdslkdld:", parent);
           navigation.navigate(parent.targeturl);
         }
       }
@@ -279,6 +281,51 @@ const SiteLayout = ({
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
   };
+
+  // Handle back button press and swipe gestures
+  const handleBackPress = useCallback(() => {
+    if (selectedChild) {
+      // If child is selected, go back to children list
+      setSelectedChild(null);
+      return true;
+    } else if (selectedParent) {
+      // If parent is selected, go back to main menu
+      setSelectedParent(null);
+      return true;
+    } else {
+      // If on main screen, show logout confirmation
+      setLogoutVisible(true);
+      return true;
+    }
+  }, [selectedParent, selectedChild]);
+
+  // Handle hardware back button
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress
+    );
+
+    return () => backHandler.remove();
+  }, [handleBackPress]);
+
+  // Handle navigation back button (for react-navigation)
+  useEffect(() => {
+    const unsubscribe = navigation?.addListener?.('beforeRemove', (e) => {
+      // Prevent default back behavior
+      e.preventDefault();
+
+      if (selectedChild) {
+        setSelectedChild(null);
+      } else if (selectedParent) {
+        setSelectedParent(null);
+      } else {
+        setLogoutVisible(true);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, selectedParent, selectedChild]);
 
   // Determine current selection path and back button behavior
   const isChildSelected = !!selectedChild;
@@ -409,7 +456,7 @@ const SiteLayout = ({
 
           <View style={styles.headerRight}>
 
-            <Text style={{color:"white",fontWeight:"bold",marginRight:"60px"}}>Welcome:{roleName}-{username}{" "}</Text>
+            <Text style={{color:"white",fontWeight:"bold",marginRight:"60px"}}>Welcome:{username}({roleName}){" "}</Text>
           </View>
           {showProfile && (
               <TouchableOpacity
