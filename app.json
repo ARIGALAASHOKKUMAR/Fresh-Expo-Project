@@ -7,7 +7,7 @@
     "icon": "./assets/harithalogo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/harithalogo.png",
+      "image": "./assets/image.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
