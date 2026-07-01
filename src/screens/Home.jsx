@@ -895,6 +895,7 @@ const Vanamahotsav = () => {
                   mode="date"
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={onDateChange}
+                      minimumDate={new Date(new Date().getFullYear(), 0, 1)} // Jan 1 of current year
                   maximumDate={new Date()}
                 />
               )}
