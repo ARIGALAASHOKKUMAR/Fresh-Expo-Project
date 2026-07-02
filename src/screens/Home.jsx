@@ -178,77 +178,109 @@ const Vanamahotsav = () => {
     }];
   };
 
-  const HandleSubmit = async (values) => {
-    try {
-      setLoading(true);
-      
-      // Transform the payload to match the required format
-      const payload = {
-        distCode: Number(values.distCode),
-        mandalCode: Number(values.mandalCode),
-        villageCode: Number(values.villageCode),
-        plantationDate: values.plantationDate,
-        locationType: values.locationType.toUpperCase(),
-        plantationType: Number(values.plantationType),
-        speciesDetails: values.speciesDetails.map(species => ({
-          species: Number(species.species),
-          noOfPlants: Number(species.noOfPlants),
-        }))
-      };
-payload.area = values.area ? Number(values.area) : null;
-      // Add forest specific fields
-      if (values.locationType === 'forest') {
-        payload.section = values.section ? Number(values.section) : null;
-        payload.beat = values.beat ? Number(values.beat) : null;
-        payload.compartment = values.compartment ? Number(values.compartment) : null;
-        payload.block = values.block ? Number(values.block) : null;
-        payload.scheme = values.scheme ? Number(values.scheme) : null;
-        
-        if (values.landmark) payload.landmark = values.landmark;
-      } else {
-        // Non-forest specific fields
-        payload.landType = values.landType;
-        payload.inchargeName = values.inchargeName;
-        payload.inchargeDesignation = values.inchargeDesignation;
-        payload.inchargeMobile = values.inchargeMobile;
-        payload.landmark = values.landmark;
-      }
+ const HandleSubmit = async (values) => {
+  try {
+    setLoading(true);
 
-      // Add others plantation type if selected
-      if (values.plantationType === '5' && values.othersPlantationType) {
+    const payload = {
+      distCode: Number(values.distCode),
+      mandalCode: Number(values.mandalCode),
+      villageCode: Number(values.villageCode),
+      plantationDate: values.plantationDate,
+      landmark: values.landmark || "test",
+      locationType:
+        values.locationType === "forest" ? "FOREST" : "NON_FOREST",
+      plantationType: Number(values.plantationType),
+
+      // API expects plantationArea
+      plantationArea: values.area ? Number(values.area) : null,
+
+      speciesDetails: values.speciesDetails.map((item) => ({
+        species: Number(item.species),
+        noOfPlants: Number(item.noOfPlants),
+      })),
+    };
+
+    // ---------------- FOREST ----------------
+    if (values.locationType === "forest") {
+      payload.section = Number(values.section);
+      payload.beat = Number(values.beat);
+      payload.compartment = Number(values.compartment);
+      payload.block = Number(values.block);
+      payload.scheme = Number(values.scheme);
+
+      if (
+        values.plantationType === "5" &&
+        values.othersPlantationType
+      ) {
         payload.othersPlantationType = values.othersPlantationType;
       }
-
-      // Add image details (at top level, not in field array)
-      payload.imageDetails = values.imageDetails.map(img => ({
-        imagePath: img.imagePath,
-        latitude: Number(img.latitude) || null,
-        longitude: Number(img.longitude) || null,
-        locationName:img.locationName
-      }));
-
-      // Remove null values
-      Object.keys(payload).forEach(key => {
-        if (payload[key] === null || payload[key] === undefined) {
-          delete payload[key];
-        }
-      });
-
-      console.log("payload",payload);
-      
-
-      const response = await commonAPICall(CREATENEWHARITHANDHRA, payload, 'post', dispatch);
-      if (response.status === 200) {
-        formik.resetForm();
-        Alert.alert('Success', 'Entry submitted successfully');
-      }
-    } catch (error) {
-      console.error('Submit error:', error);
-      Alert.alert('Error', 'Failed to submit entry');
-    } finally {
-      setLoading(false);
     }
-  };
+
+    // ---------------- NON FOREST ----------------
+    else {
+      payload.scheme = 1; // remove if API doesn't require
+
+      payload.landType = values.landType;
+      payload.inchargeName = values.inchargeName;
+
+      // API key names
+      payload.designation = values.inchargeDesignation;
+      payload.mobileNumber = values.inchargeMobile;
+      payload.inchargeLocation = values.landmark;
+
+      if (
+        values.plantationType === "5" &&
+        values.othersPlantationType
+      ) {
+        payload.othersPlantationType = values.othersPlantationType;
+      }
+    }
+
+    // ---------------- Images ----------------
+    values.imageDetails.forEach((img, index) => {
+      const imageNo = index + 1;
+
+      payload[`image${imageNo}`] = img.imagePath || "";
+      payload[`image${imageNo}Location`] = img.locationName || "";
+      payload[`image${imageNo}Latitude`] = img.latitude
+        ? Number(img.latitude)
+        : null;
+      payload[`image${imageNo}Longitude`] = img.longitude
+        ? Number(img.longitude)
+        : null;
+    });
+
+    // Remove null/undefined/empty string values
+    // Object.keys(payload).forEach((key) => {
+    //   if (
+    //     payload[key] === null ||
+    //     payload[key] === undefined ||
+    //     payload[key] === ""
+    //   ) {
+    //     delete payload[key];
+    //   }
+    // });
+
+    console.log("Payload => ", JSON.stringify(payload, null, 2));
+
+    const response = await commonAPICall(
+      CREATENEWHARITHANDHRA,
+      payload,
+      "post",
+      dispatch
+    );
+
+    if (response.status === 200) {
+      formik.resetForm();
+    }
+  } catch (error) {
+    console.log(error);
+    Alert.alert("Error", "Failed to submit entry");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const formik = useFormik({
     initialValues: {
