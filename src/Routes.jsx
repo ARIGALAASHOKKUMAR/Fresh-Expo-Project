@@ -12,6 +12,7 @@ import Overlay from "./sitelayout/Overlay";
 import { ToastProvider } from "react-native-sprinkle-toast";
 import LoginCommon from "./screens/LoginCommon";
 import Vanamahotsav from "./screens/Home";
+import PlantationReportandEntry from "./screens/PlantationReportandEntry";
 
 
 const Stack = createNativeStackNavigator();
@@ -39,7 +40,7 @@ export default function Routes() {
                       currentScreenName="HOME"
                       scrollEnabled={false}
                     >
-                      <Vanamahotsav{...props} />
+                      <PlantationReportandEntry {...props} />
                     </SiteLayout>
                   </SessionChecking>
                 )}

@@ -235,5 +235,6 @@ export const VANASECTIONS = "api/user/sections";
 export const SCHEMES = "api/user/plantationSchemes";
 export const FIRE_TRUTHING = "api/user/";
 export const CREATENEWHARITHANDHRA="api/user/harithaAndhra/createHarithaAndhraEntry"
+export const GETHARITHAANDHRADETAILS="api/user/harithaAndhra/getHarithaAndhraEntryDetails"
 
 
