@@ -719,7 +719,7 @@ const Vanamahotsav = () => {
               </Text>
               <Text style={styles.locationTypeLabel}>Location:</Text>
               <Text style={styles.locationTypeValue}>
-                {locationType === 'forest' ? 'Forest' : 'Non-Forest(Outside Forest)'}
+                {locationType === 'forest' ? 'Forest' : 'Non-Forest'}
               </Text>
             </View>
 
