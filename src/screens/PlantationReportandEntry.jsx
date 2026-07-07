@@ -20,7 +20,7 @@ const PlantationReportandEntry = () => {
   const dispatch = useDispatch();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('view');
+  const [activeTab, setActiveTab] = useState('add');
 
   const fetchPlantations = async () => {
     setLoading(true);

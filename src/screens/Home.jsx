@@ -909,7 +909,6 @@ const Vanamahotsav = () => {
               )}
             </View>
 
-            {locationType !== 'forest' && (
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Location / Landmark <Text style={styles.star}>*</Text></Text>
                 <TextInput
@@ -926,7 +925,6 @@ const Vanamahotsav = () => {
                   <Text style={styles.errorText}>{formik.errors.landmark}</Text>
                 )}
               </View>
-            )}
 
             {/* Plantation Date */}
             <View style={styles.formGroup}>
