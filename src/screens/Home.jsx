@@ -1173,14 +1173,6 @@ const Vanamahotsav = () => {
                 )}
               </View>
               
-              {formik.values.kmlFile && (
-                <View style={styles.filePreview}>
-                  <Icon name="file-document-outline" size={24} color="#4CAF50" />
-                  <Text style={styles.fileNameText} numberOfLines={1}>
-                    {formik.values.kmlFile.split('/').pop()}
-                  </Text>
-                </View>
-              )}
             </View>
 
             {/* Non-Forest specific fields */}
