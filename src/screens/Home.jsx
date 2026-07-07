@@ -847,7 +847,6 @@ const Vanamahotsav = () => {
                   }}
                   style={styles.picker}
                 >
-                  <Picker.Item label="---Select---" value="" />
                   {new_dist.map((dist) => (
                     <Picker.Item key={dist.dist_code} label={dist.dist_name} value={String(dist.dist_code)} />
                   ))}
@@ -1040,7 +1039,7 @@ const Vanamahotsav = () => {
                 )}
               </View>
             )}
-
+x
             <View style={styles.formGroup}>
                 <Text style={styles.label}>Scheme <Text style={styles.star}>*</Text></Text>
                 <View style={[
