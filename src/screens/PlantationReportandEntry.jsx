@@ -11,16 +11,16 @@ import {
   ScrollView,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from '@expo/vector-icons/Ionicons';
 import { commonAPICall, GETHARITHAANDHRADETAILS } from '../utils/utils';
 import moment from 'moment';
-import Vanamahotsav from './Home';
+import Vanamahotsav from './Home'; // adjust path as needed
 
 const PlantationReportandEntry = () => {
   const dispatch = useDispatch();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('view'); // 'view' or 'add'
+  const [activeTab, setActiveTab] = useState('view');
 
   const fetchPlantations = async () => {
     setLoading(true);
@@ -44,135 +44,78 @@ const PlantationReportandEntry = () => {
   }, []);
 
   const handleAddSuccess = () => {
-    // After successful addition, switch back to view tab and refresh list
     setActiveTab('view');
     fetchPlantations();
   };
 
-  // Render each plantation card with all available fields
-  const renderItem = ({ item, index }) => {
+  // Render each plantation card with only the selected fields
+  const renderItem = ({ item }) => {
+    // Helper to get a small thumbnail (first available image)
     const firstImage = item.image_1 || item.image_2 || item.image_3 || item.image_4 || null;
 
-    // Helper to format location fields
-    const getLocation = () => {
-      const parts = [];
-      if (item.village_name) parts.push(item.village_name);
-      if (item.mandal_name) parts.push(item.mandal_name);
-      if (item.dist_name) parts.push(item.dist_name);
-      return parts.join(', ') || 'N/A';
-    };
-
-    const getCoordinates = () => {
-      const lat = item.image_1_latitude || item.image_2_latitude || item.image_3_latitude || item.image_4_latitude;
-      const lng = item.image_1_longitude || item.image_2_longitude || item.image_3_longitude || item.image_4_longitude;
-      if (lat && lng) return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-      return 'N/A';
+    // Get in-charge name: if incharge_name is null, show fro_name
+    const getInchargeName = () => {
+      if (item.incharge_name) {
+        return item.incharge_name;
+      }
+      return `FRO-${item.fro_name} `|| 'N/A';
     };
 
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.speciesName}>{item.species_scientific_name || 'Unknown Species'}</Text>
+        {/* Row 1: Species / Plantation Type */}
+        <View style={styles.cardRow}>
+          <Text style={styles.speciesName}>{item.scheme_name || 'Unknown'}</Text>
           <View style={styles.typeBadge}>
             <Text style={styles.typeBadgeText}>{item.plantation_type_name || 'Plantation'}</Text>
           </View>
         </View>
 
-        <View style={styles.cardBody}>
-          {/* Location & Date */}
-          <View style={styles.infoRow}>
-            <Icon name="calendar-outline" size={16} color="#666" />
-            <Text style={styles.infoText}>
-              {item.plantation_date ? moment(item.plantation_date, 'DD-MM-YYYY').format('DD MMM YYYY') : 'N/A'}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Icon name="location-outline" size={16} color="#666" />
-            <Text style={styles.infoText}>{getLocation()}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Icon name="flag-outline" size={16} color="#666" />
-            <Text style={styles.infoText}>Landmark: {item.landmark || 'N/A'}</Text>
-          </View>
-
-          {/* Plantation Details */}
-          <View style={styles.detailGrid}>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Plants</Text>
-              <Text style={styles.detailValue}>{item.no_of_plants || 0}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Area (Ha)</Text>
-              <Text style={styles.detailValue}>{item.plantation_area || 0}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Total Extent</Text>
-              <Text style={styles.detailValue}>{item.total_extent_area || 0}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Total Plants</Text>
-              <Text style={styles.detailValue}>{item.total_plants || 0}</Text>
-            </View>
-          </View>
-
-          {/* Forest / Beat details */}
-          <View style={styles.forestSection}>
-            <Text style={styles.sectionTitle}>Forest Details</Text>
-            <View style={styles.flexRow}>
-              <Text style={styles.flexLabel}>Circle:</Text>
-              <Text style={styles.flexValue}>{item.circle_name || 'N/A'}</Text>
-            </View>
-            <View style={styles.flexRow}>
-              <Text style={styles.flexLabel}>Division:</Text>
-              <Text style={styles.flexValue}>{item.dfo_name || 'N/A'}</Text>
-            </View>
-            <View style={styles.flexRow}>
-              <Text style={styles.flexLabel}>Range/Beat:</Text>
-              <Text style={styles.flexValue}>{item.beat_name || item.fro_name || 'N/A'}</Text>
-            </View>
-            <View style={styles.flexRow}>
-              <Text style={styles.flexLabel}>Section:</Text>
-              <Text style={styles.flexValue}>{item.section_name || 'N/A'}</Text>
-            </View>
-            <View style={styles.flexRow}>
-              <Text style={styles.flexLabel}>Compartment:</Text>
-              <Text style={styles.flexValue}>{item.compartment_name || 'N/A'}</Text>
-            </View>
-            <View style={styles.flexRow}>
-              <Text style={styles.flexLabel}>Block:</Text>
-              <Text style={styles.flexValue}>{item.block_name || 'N/A'}</Text>
-            </View>
-            <View style={styles.flexRow}>
-              <Text style={styles.flexLabel}>Scheme:</Text>
-              <Text style={styles.flexValue}>{item.scheme_name || 'N/A'}</Text>
-            </View>
-            <View style={styles.flexRow}>
-              <Text style={styles.flexLabel}>Location Type:</Text>
-              <Text style={styles.flexValue}>{item.location_type || 'N/A'}</Text>
-            </View>
-          </View>
-
-          {/* Coordinates & Images */}
-          <View style={styles.coordSection}>
-            <Text style={styles.sectionTitle}>Coordinates</Text>
-            <Text style={styles.coordText}>{getCoordinates()}</Text>
-          </View>
-
-          {firstImage && (
-            <View style={styles.imageContainer}>
-              <Image
-                source={{ uri: firstImage.replace(/"/g, '') }}
-                style={styles.thumbnail}
-                resizeMode="cover"
-              />
-            </View>
-          )}
-
-          <View style={styles.metaRow}>
-            <Text style={styles.metaText}>Entry ID: {item.haritha_andhra_entry_id}</Text>
-            <Text style={styles.metaText}>Source: {item.entry_source || 'N/A'}</Text>
-          </View>
+        {/* Row 2: Plantation Date */}
+        <View style={styles.cardRow}>
+          <Icon name="calendar-outline" size={16} color="#2e7d32" />
+          <Text style={styles.infoText}>
+            {item.plantation_date ? moment(item.plantation_date, 'DD-MM-YYYY').format('DD MMM YYYY') : 'N/A'}
+          </Text>
         </View>
+
+        {/* Row 3: District */}
+        <View style={styles.cardRow}>
+          <Icon name="location-outline" size={16} color="#2e7d32" />
+          <Text style={styles.infoText}>{item.dist_name || 'N/A'}</Text>
+        </View>
+
+        {/* Row 4: Scheme & Forest Type */}
+        <View style={styles.cardRow}>
+          <Icon name="leaf-outline" size={16} color="#2e7d32" />
+          <Text style={styles.infoText}>{item.location_type || 'N/A'}</Text>
+        </View>
+
+        {/* Row 5: Area & Total Plants */}
+        <View style={styles.cardRow}>
+          <Icon name="resize-outline" size={16} color="#2e7d32" />
+          <Text style={styles.infoText}>Area: {item.plantation_area || 0} Ha</Text>
+          <Text style={styles.spacer}>|</Text>
+          <Icon name="stats-chart-outline" size={16} color="#2e7d32" />
+          <Text style={styles.infoText}>Plants: {item.total_plants || item.no_of_plants || 0}</Text>
+        </View>
+
+        {/* Row 6: In-charge / FRO Name */}
+        <View style={styles.cardRow}>
+          <Icon name="person-outline" size={16} color="#2e7d32" />
+          <Text style={styles.infoText}>
+            Incharge Officer: {getInchargeName()}
+          </Text>
+        </View>
+
+        {/* Optional thumbnail (small) */}
+        {firstImage && (
+          <Image
+            source={{ uri: firstImage.replace(/"/g, '') }}
+            style={styles.thumbnail}
+            resizeMode="cover"
+          />
+        )}
       </View>
     );
   };
@@ -186,7 +129,7 @@ const PlantationReportandEntry = () => {
           onPress={() => setActiveTab('view')}
         >
           <Text style={[styles.tabText, activeTab === 'view' && styles.activeTabText]}>
-            🌲 View Plantations
+           🌳 My Plantations
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -194,12 +137,12 @@ const PlantationReportandEntry = () => {
           onPress={() => setActiveTab('add')}
         >
           <Text style={[styles.tabText, activeTab === 'add' && styles.activeTabText]}>
-            🌿 Add Plantation
+            🌱 Add Plantation
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Content based on active tab */}
+      {/* Content */}
       {activeTab === 'view' ? (
         <View style={styles.content}>
           {loading ? (
@@ -295,24 +238,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     marginBottom: 14,
+    padding: 14,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#e8f5e9',
   },
-  cardHeader: {
+  cardRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: '#e8f5e9',
-    borderBottomWidth: 1,
-    borderBottomColor: '#c8e6c9',
+    marginBottom: 6,
+    flexWrap: 'wrap',
   },
   speciesName: {
     fontSize: 16,
@@ -325,105 +264,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+    marginLeft: 6,
   },
   typeBadgeText: {
     color: '#fff',
     fontSize: 10,
     fontWeight: '600',
   },
-  cardBody: {
-    padding: 12,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
   infoText: {
     fontSize: 13,
     color: '#333',
-    marginLeft: 8,
-    flex: 1,
+    marginLeft: 6,
   },
-  detailGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginVertical: 8,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+  spacer: {
+    marginHorizontal: 6,
+    color: '#ccc',
   },
-  detailItem: {
-    width: '48%',
-    marginBottom: 4,
-  },
-  detailLabel: {
+  froLabel: {
     fontSize: 11,
     color: '#888',
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1b5e20',
-  },
-  forestSection: {
-    marginVertical: 6,
-    paddingVertical: 6,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#2e7d32',
-    marginBottom: 4,
-  },
-  flexRow: {
-    flexDirection: 'row',
-    marginVertical: 1,
-  },
-  flexLabel: {
-    width: 90,
-    fontSize: 12,
-    color: '#666',
-  },
-  flexValue: {
-    flex: 1,
-    fontSize: 12,
-    color: '#333',
-    fontWeight: '500',
-  },
-  coordSection: {
-    marginVertical: 4,
-  },
-  coordText: {
-    fontSize: 12,
-    color: '#555',
-    fontFamily: 'monospace',
-  },
-  imageContainer: {
-    marginTop: 8,
-    marginBottom: 6,
-    borderRadius: 6,
-    overflow: 'hidden',
+    fontStyle: 'italic',
   },
   thumbnail: {
     width: '100%',
-    height: 150,
+    height: 120,
     borderRadius: 6,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  metaText: {
-    fontSize: 11,
-    color: '#888',
+    marginTop: 8,
   },
   emptyContainer: {
     paddingVertical: 60,
