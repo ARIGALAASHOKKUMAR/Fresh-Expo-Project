@@ -981,12 +981,11 @@ const Vanamahotsav = () => {
     >
       <Picker.Item label="--Select--" value="" />
       <Picker.Item label="Block Plantation" value="1" />
-      <Picker.Item label="Avenue Plantation" value="2" />
+      <Picker.Item label="Avenue / Linear Plantation" value="2" />
       <Picker.Item label="Bund / Canal Plantation" value="3" />
       <Picker.Item label="Agro Forestry / Horticulture" value="4" />
-      <Picker.Item label="Institutional" value="5" />
-       <Picker.Item label="Mangrove Plantation" value="5" />
-      <Picker.Item label="Others" value="6" />
+       <Picker.Item label="Mangrove Plantation" value="6" />
+      <Picker.Item label="Others" value="5" />
     </Picker>
   </View>
   {formik.touched.plantationType && formik.errors.plantationType && (
@@ -1023,7 +1022,7 @@ const Vanamahotsav = () => {
     )}
   </View>
             {/* Others Plantation Type */}
-            {formik.values.plantationType === '6' && (
+            {formik.values.plantationType === '5' && (
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Other Plantation Type <Text style={styles.star}>*</Text></Text>
                 <TextInput
