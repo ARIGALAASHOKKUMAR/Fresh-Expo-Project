@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
   Platform,
+  Linking,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFormik } from 'formik';
@@ -29,6 +30,7 @@ import {
 import ImageBucketRN from '../utils/ImageBucketRN';
 import { GetSpecies, GetNewMandals, new_dist, NewVillages, GetBeat, GetCompartment, GetBlock } from '../utils/CommonFunctions';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
 const Vanamahotsav = () => {
   const dispatch = useDispatch();
   const state = useSelector((s) => s.LoginReducer);
@@ -119,6 +121,7 @@ const Vanamahotsav = () => {
       then: (schema) => schema.required('Other plantation type is required'),
       otherwise: (schema) => schema.notRequired(),
     }),
+    plantSpacing: Yup.string().required('Plant spacing is required'),
     speciesDetails: Yup.array().of(
       Yup.object().shape({
         species: Yup.string().required('Species is required'),
@@ -134,6 +137,7 @@ const Vanamahotsav = () => {
         imagePath: Yup.string().required('Image is required'),
       })
     ).min(4, 'Minimum 4 images required').max(15, 'Maximum 15 images allowed'),
+    kmlFile: Yup.string().notRequired(),
   });
 
   // Get Sections
@@ -194,8 +198,7 @@ const Vanamahotsav = () => {
       locationType:
         values.locationType === "forest" ? "FOREST" : "NON_FOREST",
       plantationType: Number(values.plantationType),
-
-      // API expects plantationArea
+      plantSpacing: Number(values.plantSpacing),
       plantationArea: values.area ? Number(values.area) : null,
 
       speciesDetails: values.speciesDetails.map((item) => ({
@@ -222,12 +225,10 @@ const Vanamahotsav = () => {
 
     // ---------------- NON FOREST ----------------
     else {
-      payload.scheme = 1; // remove if API doesn't require
+      payload.scheme = 1;
 
       payload.landType = values.landType;
       payload.inchargeName = values.inchargeName;
-
-      // API key names
       payload.designation = values.inchargeDesignation;
       payload.mobileNumber = values.inchargeMobile;
       payload.inchargeLocation = values.landmark;
@@ -254,16 +255,10 @@ const Vanamahotsav = () => {
         : null;
     });
 
-    // Remove null/undefined/empty string values
-    // Object.keys(payload).forEach((key) => {
-    //   if (
-    //     payload[key] === null ||
-    //     payload[key] === undefined ||
-    //     payload[key] === ""
-    //   ) {
-    //     delete payload[key];
-    //   }
-    // });
+    // ---------------- KML File ----------------
+    if (values.kmlFile) {
+      payload.kmlFile = values.kmlFile;
+    }
 
     console.log("Payload => ", JSON.stringify(payload, null, 2));
 
@@ -276,6 +271,7 @@ const Vanamahotsav = () => {
 
     if (response.status === 200) {
       formik.resetForm();
+      Alert.alert("Success", "Entry submitted successfully");
     }
   } catch (error) {
     console.log(error);
@@ -302,10 +298,12 @@ const Vanamahotsav = () => {
       scheme: '',
       plantationType: '',
       othersPlantationType: '',
+      plantSpacing: '',
       landType: '',
       inchargeName: '',
       inchargeDesignation: '',
       inchargeMobile: '',
+      kmlFile: '',
       speciesDetails: getInitialSpecies(),
       imageDetails: [
         {
@@ -476,6 +474,44 @@ const Vanamahotsav = () => {
     }
   };
 
+  // Handle KML Upload
+  const handleKMLUpload = async () => {
+    const path = 'APFD/VANAMAHOTSAV/KML/';
+    await ImageBucketRN(
+      formik,
+      path,
+      'kmlFile',
+      20971520,
+      'document',
+      dispatch
+    );
+  };
+
+  // Open KML in Google Earth
+  const openKMLInGoogleEarth = () => {
+    const kmlPath = formik.values.kmlFile;
+    if (!kmlPath) {
+      Alert.alert('No File', 'Please upload a KML file first');
+      return;
+    }
+
+    // Try to open with Google Earth
+    const url = `https://earth.google.com/web/@0,0,0a,22251752.7737568d,35y,0h,0t,0r`;
+    Linking.openURL(url).catch(() => {
+      // If Google Earth web fails, try to open the file directly
+      Linking.openURL(kmlPath).catch(() => {
+        Alert.alert(
+          'Cannot Open',
+          'Please install Google Earth app or try opening the file manually',
+          [
+            { text: 'OK' },
+            { text: 'Download Google Earth', onPress: () => Linking.openURL('https://play.google.com/store/apps/details?id=com.google.earth') }
+          ]
+        );
+      });
+    });
+  };
+
    const ordinals = ['First', 'Second', 'Third', 'Fourth', 'Fifth',"Sixth"];
 
 
@@ -487,7 +523,7 @@ const Vanamahotsav = () => {
       <View>
         <View style={styles.imageHeaderContainer}>
           <Text style={styles.subLabel}>
-            Upload Images (Min: 4,Max: 6) <Text style={styles.star}>*</Text>
+            Upload Images (Min: 4, Max: 15) <Text style={styles.star}>*</Text>
           </Text>
         </View>
 
@@ -824,8 +860,6 @@ const Vanamahotsav = () => {
                     <Text style={styles.errorText}>{formik.errors.block}</Text>
                   )}
                 </View>
-
-                {/* Area - Forest only */}
               </>
             )}
 
@@ -908,22 +942,22 @@ const Vanamahotsav = () => {
               )}
             </View>
 
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Location / Landmark <Text style={styles.star}>*</Text></Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    formik.touched.landmark && formik.errors.landmark && styles.inputError,
-                  ]}
-                  placeholder="Enter Location / Landmark"
-                  value={formik.values.landmark}
-                  onChangeText={formik.handleChange('landmark')}
-                  onBlur={formik.handleBlur('landmark')}
-                />
-                {formik.touched.landmark && formik.errors.landmark && (
-                  <Text style={styles.errorText}>{formik.errors.landmark}</Text>
-                )}
-              </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Location / Landmark <Text style={styles.star}>*</Text></Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  formik.touched.landmark && formik.errors.landmark && styles.inputError,
+                ]}
+                placeholder="Enter Location / Landmark"
+                value={formik.values.landmark}
+                onChangeText={formik.handleChange('landmark')}
+                onBlur={formik.handleBlur('landmark')}
+              />
+              {formik.touched.landmark && formik.errors.landmark && (
+                <Text style={styles.errorText}>{formik.errors.landmark}</Text>
+              )}
+            </View>
 
             {/* Plantation Date */}
             <View style={styles.formGroup}>
@@ -951,7 +985,7 @@ const Vanamahotsav = () => {
                   mode="date"
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={onDateChange}
-                      minimumDate={new Date(new Date().getFullYear(), 0, 1)} // Jan 1 of current year
+                  minimumDate={new Date(new Date().getFullYear(), 0, 1)}
                   maximumDate={new Date()}
                 />
               )}
@@ -961,66 +995,36 @@ const Vanamahotsav = () => {
               )}
             </View>
 
-            {/* Plantation Type - Top level (Voluntary) */}
+            {/* Plantation Type */}
             <View style={styles.formGroup}>
-  <Text style={styles.label}>Plantation Type <Text style={styles.star}>*</Text></Text>
-  <View style={[
-    styles.pickerContainer,
-    formik.touched.plantationType && formik.errors.plantationType && styles.inputError
-  ]}>
-    <Picker
-      selectedValue={formik.values.plantationType}
-      onValueChange={(itemValue) => {
-        formik.setFieldValue('plantationType', itemValue);
-        formik.setFieldValue('othersPlantationType', '');
-        // Reset area value when plantation type changes
-        formik.setFieldValue('area', '');
-      }}
-      style={styles.picker}
-    >
-      <Picker.Item label="--Select--" value="" />
-      <Picker.Item label="Block Plantation" value="1" />
-      <Picker.Item label="Avenue / Linear Plantation" value="2" />
-      <Picker.Item label="Bund / Canal Plantation" value="3" />
-      <Picker.Item label="Agro Forestry / Horticulture" value="4" />
-       <Picker.Item label="Mangrove Plantation" value="6" />
-      <Picker.Item label="Others" value="5" />
-    </Picker>
-  </View>
-  {formik.touched.plantationType && formik.errors.plantationType && (
-    <Text style={styles.errorText}>{formik.errors.plantationType}</Text>
-  )}
-</View>
+              <Text style={styles.label}>Plantation Type <Text style={styles.star}>*</Text></Text>
+              <View style={[
+                styles.pickerContainer,
+                formik.touched.plantationType && formik.errors.plantationType && styles.inputError
+              ]}>
+                <Picker
+                  selectedValue={formik.values.plantationType}
+                  onValueChange={(itemValue) => {
+                    formik.setFieldValue('plantationType', itemValue);
+                    formik.setFieldValue('othersPlantationType', '');
+                    formik.setFieldValue('area', '');
+                  }}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="--Select--" value="" />
+                  <Picker.Item label="Block Plantation" value="1" />
+                  <Picker.Item label="Avenue / Linear Plantation" value="2" />
+                  <Picker.Item label="Bund / Canal Plantation" value="3" />
+                  <Picker.Item label="Agro Forestry / Horticulture" value="4" />
+                  <Picker.Item label="Mangrove Plantation" value="6" />
+                  <Picker.Item label="Others" value="5" />
+                </Picker>
+              </View>
+              {formik.touched.plantationType && formik.errors.plantationType && (
+                <Text style={styles.errorText}>{formik.errors.plantationType}</Text>
+              )}
+            </View>
 
-{/* Area field - conditionally show based on plantation type and location */}
-
-  <View style={styles.formGroup}>
-    <Text style={styles.label}>
-      {formik.values.plantationType === '2' || formik.values.plantationType === '3' 
-        ? 'Length (Km)' 
-        : 'Area (Ha)'} 
-      <Text style={styles.star}>*</Text>
-    </Text>
-    <TextInput
-      style={[
-        styles.input,
-        formik.touched.area && formik.errors.area && styles.inputError,
-      ]}
-      placeholder={
-        formik.values.plantationType === '2' || formik.values.plantationType === '3'
-          ? "Enter length in kilometers"
-          : "Enter area in hectares"
-      }
-      keyboardType="numeric"
-      value={formik.values.area}
-      onChangeText={formik.handleChange('area')}
-      onBlur={formik.handleBlur('area')}
-    />
-    {formik.touched.area && formik.errors.area && (
-      <Text style={styles.errorText}>{formik.errors.area}</Text>
-    )}
-  </View>
-            {/* Others Plantation Type */}
             {formik.values.plantationType === '5' && (
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Other Plantation Type <Text style={styles.star}>*</Text></Text>
@@ -1039,8 +1043,38 @@ const Vanamahotsav = () => {
                 )}
               </View>
             )}
-x
+
+            {/* Area field */}
             <View style={styles.formGroup}>
+              <Text style={styles.label}>
+                {formik.values.plantationType === '2' || formik.values.plantationType === '3' 
+                  ? 'Length (Km)' 
+                  : 'Area (Ha)'} 
+                <Text style={styles.star}>*</Text>
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  formik.touched.area && formik.errors.area && styles.inputError,
+                ]}
+                placeholder={
+                  formik.values.plantationType === '2' || formik.values.plantationType === '3'
+                    ? "Enter length in kilometers"
+                    : "Enter area in hectares"
+                }
+                keyboardType="numeric"
+                value={formik.values.area}
+                onChangeText={formik.handleChange('area')}
+                onBlur={formik.handleBlur('area')}
+              />
+              {formik.touched.area && formik.errors.area && (
+                <Text style={styles.errorText}>{formik.errors.area}</Text>
+              )}
+            </View>
+
+            {/* Scheme - Forest only */}
+            {locationType === 'forest' && (
+              <View style={styles.formGroup}>
                 <Text style={styles.label}>Scheme <Text style={styles.star}>*</Text></Text>
                 <View style={[
                   styles.pickerContainer,
@@ -1063,87 +1097,91 @@ x
                   <Text style={styles.errorText}>{formik.errors.scheme}</Text>
                 )}
               </View>
+            )}
 
-            {/* Landmark - Not mandatory for forest */}
-
+            {/* Plant Spacing */}
             <View style={styles.formGroup}>
-  <Text style={styles.label}>Plant Spacing (m) <Text style={styles.star}>*</Text></Text>
-  <View style={[
-    styles.pickerContainer,
-    formik.touched.plantSpacing && formik.errors.plantSpacing && styles.inputError
-  ]}>
-    <Picker
-      selectedValue={formik.values.plantSpacing}
-      onValueChange={(itemValue) => {
-        formik.setFieldValue('plantSpacing', itemValue);
-      }}
-      style={styles.picker}
-    >
-      <Picker.Item label="--Select--" value="" />
-      <Picker.Item label="1 × 1 m" value="1" />
-      <Picker.Item label="2 × 2 m" value="2" />
-      <Picker.Item label="3 × 2 m" value="3" />
-      <Picker.Item label="3 × 3 m" value="4" />
-      <Picker.Item label="4 × 4 m" value="5" />
-      <Picker.Item label="5 × 5 m" value="6" />
-    </Picker>
-  </View>
-  {formik.touched.plantSpacing && formik.errors.plantSpacing && (
-    <Text style={styles.errorText}>{formik.errors.plantSpacing}</Text>
-  )}
-</View>
- <View style={styles.formGroup}>
-              <TouchableOpacity
-                style={[
-                  styles.uploadButton,
-                  formik.errors.noticeFile &&
-                    formik.touched.noticeFile &&
-                    styles.inputError,
-                ]}
-                onPress={() => {
-                  const path = 'APFD/VANA/';
-                  ImageBucketRN(
-                    formik,
-                    path,
-                    'noticeFile',
-                    20971520,
-                    'document',
-                    dispatch
-                  );
-                }}
-              >
-                <Text style={styles.uploadButtonText}>Upload kml</Text>
-              </TouchableOpacity>
-              {formik.values.noticeFile && (
+              <Text style={styles.label}>Plant Spacing (m) <Text style={styles.star}>*</Text></Text>
+              <View style={[
+                styles.pickerContainer,
+                formik.touched.plantSpacing && formik.errors.plantSpacing && styles.inputError
+              ]}>
+                <Picker
+                  selectedValue={formik.values.plantSpacing}
+                  onValueChange={(itemValue) => {
+                    formik.setFieldValue('plantSpacing', itemValue);
+                  }}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="--Select--" value="" />
+                  <Picker.Item label="1 × 1 m" value="1" />
+                  <Picker.Item label="2 × 2 m" value="2" />
+                  <Picker.Item label="3 × 2 m" value="3" />
+                  <Picker.Item label="3 × 3 m" value="4" />
+                  <Picker.Item label="4 × 4 m" value="5" />
+                  <Picker.Item label="5 × 5 m" value="6" />
+                  <Picker.Item label="6 × 6 m" value="7" />
+                  <Picker.Item label="Others" value="8" />
+                </Picker>
+              </View>
+              {formik.touched.plantSpacing && formik.errors.plantSpacing && (
+                <Text style={styles.errorText}>{formik.errors.plantSpacing}</Text>
+              )}
+            </View>
+
+            {/* Plant Spacing Others */}
+            {formik.values.plantSpacing === '8' && (
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Other Plant Spacing <Text style={styles.star}>*</Text></Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    formik.touched.otherPlantSpacing && formik.errors.otherPlantSpacing && styles.inputError,
+                  ]}
+                  placeholder="Enter other plant spacing"
+                  value={formik.values.otherPlantSpacing}
+                  onChangeText={formik.handleChange('otherPlantSpacing')}
+                  onBlur={formik.handleBlur('otherPlantSpacing')}
+                />
+                {formik.touched.otherPlantSpacing && formik.errors.otherPlantSpacing && (
+                  <Text style={styles.errorText}>{formik.errors.otherPlantSpacing}</Text>
+                )}
+              </View>
+            )}
+
+            {/* KML Upload */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Upload KML </Text>
+              <View style={styles.kmlContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.uploadButton,
+                    { flex: 1 }
+                  ]}
+                  onPress={handleKMLUpload}
+                >
+                  <Text style={styles.uploadButtonText}>📁 Upload KML</Text>
+                </TouchableOpacity>
+                
+                {formik.values.kmlFile && (
+                  <TouchableOpacity
+                    style={styles.viewKMLButton}
+                    onPress={openKMLInGoogleEarth}
+                  >
+                    <Text style={styles.viewKMLButtonText}>👁️ View</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              
+              {formik.values.kmlFile && (
                 <View style={styles.filePreview}>
-                  {noticeFormik.values.noticeFile.match(/\.(jpg|jpeg|png)$/i) ? (
-                    <Image
-                      source={{ uri: noticeFormik.values.noticeFile }}
-                      style={styles.imagePreview}
-                    />
-                  ) : noticeFormik.values.noticeFile.match(/\.pdf$/i) ? (
-                    <TouchableOpacity
-                      style={styles.pdfPreview}
-                      onPress={() => Linking.openURL(noticeFormik.values.noticeFile)}
-                    >
-                      <Icon name="document-text-outline" size={24} color="red" />
-                      <Text style={styles.pdfText}>Download PDF</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <Text style={styles.fileNameText}>{noticeFormik.values.noticeFile}</Text>
-                  )}
+                  <Icon name="file-document-outline" size={24} color="#4CAF50" />
+                  <Text style={styles.fileNameText} numberOfLines={1}>
+                    {formik.values.kmlFile.split('/').pop()}
+                  </Text>
                 </View>
               )}
-              {formik.errors.noticeFile &&
-                formik.touched.noticeFile && (
-                  <Text style={styles.errorText}>
-                    {formik.errors.noticeFile}
-                  </Text>
-                )}
-              
             </View>
-            
-            
 
             {/* Non-Forest specific fields */}
             {locationType === 'nonforest' && (
@@ -1226,14 +1264,8 @@ x
                     <Text style={styles.errorText}>{formik.errors.inchargeMobile}</Text>
                   )}
                 </View>
-
-                {/* Landmark for non-forest */}
-               
               </>
             )}
-
-            {/* Scheme (Forest only) */}
-              
 
             {/* Species Details Section */}
             <View style={styles.speciesSection}>
@@ -1245,7 +1277,7 @@ x
               {renderSpeciesDetails()}
             </View>
 
-            {/* Images Section - Top Level */}
+            {/* Images Section */}
             <View style={styles.imagesSection}>
               <View style={styles.imagesHeader}>
                 <Text style={styles.imagesEmoji}>📸</Text>
@@ -1298,6 +1330,7 @@ x
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
