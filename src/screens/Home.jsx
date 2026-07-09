@@ -261,7 +261,6 @@ const Vanamahotsav = () => {
 
     if (response.status === 200) {
       formik.resetForm();
-      Alert.alert("Success", "Entry submitted successfully");
     }
   } catch (error) {
     console.log(error);

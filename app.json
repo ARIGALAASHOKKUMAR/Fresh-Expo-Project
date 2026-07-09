@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/512*512logo.png",
     "userInterfaceStyle": "light",
+    "jsEngine": "hermes",
     "splash": {
       "image": "./assets/image.png",
       "resizeMode": "contain",
@@ -16,13 +17,12 @@
       "bundleIdentifier": "com.anonymous.MissionHarithaAndhra"
     },
     "android": {
+      "package": "com.anonymous.MissionHarithaAndhra",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/512*512logo.png",
-        "backgroundImage": "./assets/512*512logo.png",
+        "backgroundColor": "#E6F4FE",
         "monochromeImage": "./assets/512*512logo.png"
-      },
-      "package": "com.anonymous.MissionHarithaAndhra"
+      }
     },
     "web": {
       "favicon": "./assets/512*512logo.png"

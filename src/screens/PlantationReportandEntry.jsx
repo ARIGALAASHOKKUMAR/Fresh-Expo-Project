@@ -9,6 +9,8 @@ import {
   Alert,
   Image,
   ScrollView,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
 import Icon from '@expo/vector-icons/Ionicons';
@@ -16,11 +18,18 @@ import { commonAPICall, GETHARITHAANDHRADETAILS } from '../utils/utils';
 import moment from 'moment';
 import Vanamahotsav from './Home'; // adjust path as needed
 
+const { width, height } = Dimensions.get('window');
+
 const PlantationReportandEntry = () => {
   const dispatch = useDispatch();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('add');
+  
+  // Image preview states
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const fetchPlantations = async () => {
     setLoading(true);
@@ -48,17 +57,49 @@ const PlantationReportandEntry = () => {
     fetchPlantations();
   };
 
+  // Handle image press - open preview
+  const handleImagePress = (item, index) => {
+    // Collect all available images
+    const images = [1, 2, 3, 4]
+      .map(num => item[`image_${num}`])
+      .filter(img => img !== null && img !== undefined && img !== '');
+    
+    if (images.length === 0) {
+      Alert.alert('No Images', 'No images available for this plantation.');
+      return;
+    }
+    
+    setSelectedImages(images);
+    setSelectedIndex(index < images.length ? index : 0);
+    setModalVisible(true);
+  };
+
+  // Navigation handlers
+  const handleNext = () => {
+    if (selectedIndex < selectedImages.length - 1) {
+      setSelectedIndex(selectedIndex + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (selectedIndex > 0) {
+      setSelectedIndex(selectedIndex - 1);
+    }
+  };
+
   // Render each plantation card with only the selected fields
   const renderItem = ({ item }) => {
-    // Helper to get a small thumbnail (first available image)
-    const firstImage = item.image_1 || item.image_2 || item.image_3 || item.image_4 || null;
+    // Get all available images
+    const availableImages = [1, 2, 3, 4]
+      .map(num => item[`image_${num}`])
+      .filter(img => img !== null && img !== undefined && img !== '');
 
     // Get in-charge name: if incharge_name is null, show fro_name
     const getInchargeName = () => {
       if (item.incharge_name) {
         return item.incharge_name;
       }
-      return `FRO-${item.fro_name} `|| 'N/A';
+      return `FRO-${item.fro_name}` || 'N/A';
     };
 
     return (
@@ -108,16 +149,26 @@ const PlantationReportandEntry = () => {
           </Text>
         </View>
 
-        {/* Optional thumbnail (small) */}
-        <View style={{display:"flex",flexDirection:"row",gap:"40px"}}>
-          {[1,2,3,4].map((each,index)=>(
- <Image
-       source={{ uri: item[`image_${index + 1}`] }}
-            style={styles.thumbnail}
-            resizeMode="cover"
-          />
-          ))}
-        
+        {/* Image thumbnails */}
+        <View style={styles.imageContainer}>
+          {[1, 2, 3, 4].map((each, index) => {
+            const imageUri = item[`image_${each}`];
+            if (!imageUri) return null;
+            
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleImagePress(item, index)}
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.thumbnail}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
     );
@@ -127,7 +178,7 @@ const PlantationReportandEntry = () => {
     <View style={styles.container}>
       {/* Tab Header */}
       <View style={styles.tabContainer}>
-         <TouchableOpacity
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'add' && styles.activeTab]}
           onPress={() => setActiveTab('add')}
         >
@@ -140,10 +191,9 @@ const PlantationReportandEntry = () => {
           onPress={() => setActiveTab('view')}
         >
           <Text style={[styles.tabText, activeTab === 'view' && styles.activeTabText]}>
-           🌳 My Plantations
+            🌳 My Plantations
           </Text>
         </TouchableOpacity>
-       
       </View>
 
       {/* Content */}
@@ -176,6 +226,97 @@ const PlantationReportandEntry = () => {
           <Vanamahotsav onSuccess={handleAddSuccess} />
         </ScrollView>
       )}
+
+      {/* Image Preview Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          {/* Close button */}
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setModalVisible(false)}
+            activeOpacity={0.7}
+          >
+            <Icon name="close" size={30} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Main image */}
+          {selectedImages.length > 0 && selectedIndex < selectedImages.length && (
+            <View style={styles.imageContainerModal}>
+              <Image
+                source={{ uri: selectedImages[selectedIndex] }}
+                style={styles.previewImage}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+
+          {/* Navigation controls */}
+          {selectedImages.length > 1 && (
+            <View style={styles.navigationContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.navButton,
+                  selectedIndex === 0 && styles.navButtonDisabled
+                ]}
+                onPress={handlePrevious}
+                disabled={selectedIndex === 0}
+                activeOpacity={0.7}
+              >
+                <Icon name="chevron-back" size={30} color="#fff" />
+              </TouchableOpacity>
+
+              <Text style={styles.counterText}>
+                {selectedIndex + 1} / {selectedImages.length}
+              </Text>
+
+              <TouchableOpacity
+                style={[
+                  styles.navButton,
+                  selectedIndex === selectedImages.length - 1 && styles.navButtonDisabled
+                ]}
+                onPress={handleNext}
+                disabled={selectedIndex === selectedImages.length - 1}
+                activeOpacity={0.7}
+              >
+                <Icon name="chevron-forward" size={30} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Thumbnail strip at bottom */}
+          {selectedImages.length > 1 && (
+            <View style={styles.thumbnailStrip}>
+              <FlatList
+                horizontal
+                data={selectedImages}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item, index }) => (
+                  <TouchableOpacity
+                    onPress={() => setSelectedIndex(index)}
+                    style={[
+                      styles.thumbnailItem,
+                      selectedIndex === index && styles.thumbnailItemActive
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: item }}
+                      style={styles.thumbnailSmall}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                )}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.thumbnailStripContent}
+              />
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -289,12 +430,18 @@ const styles = StyleSheet.create({
     color: '#888',
     fontStyle: 'italic',
   },
+  imageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    gap: 8,
+  },
   thumbnail: {
-    width: '25%',
+    width: 60,
     height: 60,
     borderRadius: 6,
-    marginTop: 8,
-    marginRight:2
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   emptyContainer: {
     paddingVertical: 60,
@@ -309,6 +456,94 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#999',
     marginTop: 6,
+  },
+
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 25,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageContainerModal: {
+    width: width * 0.95,
+    height: height * 0.6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  navigationContainer: {
+    position: 'absolute',
+    bottom: 120,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: width * 0.9,
+    paddingHorizontal: 20,
+  },
+  navButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 30,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  navButtonDisabled: {
+    opacity: 0.3,
+  },
+  counterText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  thumbnailStrip: {
+    position: 'absolute',
+    bottom: 40,
+    width: width,
+    height: 70,
+    justifyContent: 'center',
+  },
+  thumbnailStripContent: {
+    paddingHorizontal: 10,
+    alignItems: 'center',
+  },
+  thumbnailItem: {
+    marginHorizontal: 4,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    overflow: 'hidden',
+  },
+  thumbnailItemActive: {
+    borderColor: '#fff',
+  },
+  thumbnailSmall: {
+    width: 50,
+    height: 50,
+    borderRadius: 4,
   },
 });
 
