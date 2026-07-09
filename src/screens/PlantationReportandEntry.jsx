@@ -127,6 +127,14 @@ const PlantationReportandEntry = () => {
     <View style={styles.container}>
       {/* Tab Header */}
       <View style={styles.tabContainer}>
+         <TouchableOpacity
+          style={[styles.tab, activeTab === 'add' && styles.activeTab]}
+          onPress={() => setActiveTab('add')}
+        >
+          <Text style={[styles.tabText, activeTab === 'add' && styles.activeTabText]}>
+            🌱 Add Plantation
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'view' && styles.activeTab]}
           onPress={() => setActiveTab('view')}
@@ -135,14 +143,7 @@ const PlantationReportandEntry = () => {
            🌳 My Plantations
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'add' && styles.activeTab]}
-          onPress={() => setActiveTab('add')}
-        >
-          <Text style={[styles.tabText, activeTab === 'add' && styles.activeTabText]}>
-            🌱 Add Plantation
-          </Text>
-        </TouchableOpacity>
+       
       </View>
 
       {/* Content */}

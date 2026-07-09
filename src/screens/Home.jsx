@@ -78,21 +78,9 @@ const Vanamahotsav = () => {
     mandalCode: Yup.string().required('Mandal is required'),
     villageCode: Yup.string().required('Village is required'),
     plantationDate: Yup.string().required('Plantation date is required'),
-    landmark: Yup.string().when('locationType', {
-      is: (val) => val === 'forest',
-      then: () => Yup.string().notRequired(),
-      otherwise: () => Yup.string().required('Landmark is required'),
-    }),
-    area: Yup.string().when('locationType', {
-      is: (val) => val === 'forest',
-      then: () => Yup.string().required('Area is required'),
-      otherwise: () => Yup.string().notRequired(),
-    }),
-    scheme: Yup.string().when('locationType', {
-      is: (val) => val === 'forest',
-      then: () => Yup.string().required('Scheme is required'),
-      otherwise: () => Yup.string().notRequired(),
-    }),
+    landmark: Yup.string().required('Landmark is required'),
+    area: Yup.string().required('Area is required'),
+    scheme: Yup.string().required('Scheme is required'),
     landType: Yup.string().when('locationType', {
       is: (val) => val === 'nonforest',
       then: () => Yup.string().required('Land type is required'),
@@ -493,29 +481,114 @@ const Vanamahotsav = () => {
   
 
   // Open KML in Google Earth
-  const openKMLInGoogleEarth = () => {
-    const kmlPath = formik.values.kmlFile;
-    if (!kmlPath) {
-      Alert.alert('No File', 'Please upload a KML file first');
-      return;
-    }
+  const openKMLInGoogleEarth = async () => {
+  const kmlPath = formik.values.kmlFile;
+  if (!kmlPath) {
+    Alert.alert('No File', 'Please upload a KML file first');
+    return;
+  }
 
-    // Try to open with Google Earth
-    const url = `https://earth.google.com/web/@0,0,0a,22251752.7737568d,35y,0h,0t,0r`;
-    Linking.openURL(url).catch(() => {
-      // If Google Earth web fails, try to open the file directly
-      Linking.openURL(kmlPath).catch(() => {
-        Alert.alert(
-          'Cannot Open',
-          'Please install Google Earth app or try opening the file manually',
-          [
-            { text: 'OK' },
-            { text: 'Download Google Earth', onPress: () => Linking.openURL('https://play.google.com/store/apps/details?id=com.google.earth') }
-          ]
-        );
-      });
+  try {
+    setLoading(true);
+    
+    // First, fetch the KML file content
+    const response = await fetch(kmlPath);
+    if (!response.ok) {
+      throw new Error('Failed to fetch KML file');
+    }
+    
+    // Get the KML content as text
+    const kmlContent = await response.text();
+    
+    // Convert to base64
+    const base64KML = btoa(unescape(encodeURIComponent(kmlContent)));
+    
+    // Method 1: Try to open with Google Earth app using data URI
+    const dataUri = `data:application/vnd.google-earth.kml+xml;base64,${base64KML}`;
+    
+    if (Platform.OS === 'android') {
+      // For Android, use intent with data URI
+      const googleEarthPackage = 'com.google.earth';
+      const intentUrl = `intent://${dataUri}#Intent;package=${googleEarthPackage};end`;
+      
+      const canOpen = await Linking.canOpenURL(intentUrl);
+      if (canOpen) {
+        await Linking.openURL(intentUrl);
+        setLoading(false);
+        return;
+      }
+    }
+    
+    if (Platform.OS === 'ios') {
+      // For iOS, try to open with Google Earth app using URL scheme
+      const iosUrl = `comgoogleearth://${dataUri}`;
+      const canOpenIOS = await Linking.canOpenURL(iosUrl);
+      if (canOpenIOS) {
+        await Linking.openURL(iosUrl);
+        setLoading(false);
+        return;
+      }
+    }
+    
+    // Method 2: Create a temporary file and open it
+    const fileName = `kml_${Date.now()}.kml`;
+    const localFilePath = `${FileSystem.cacheDirectory}${fileName}`;
+    
+    // Write the KML content to a local file
+    await FileSystem.writeAsStringAsync(localFilePath, kmlContent, {
+      encoding: FileSystem.EncodingType.UTF8,
     });
-  };
+    
+    // Method 3: Open with Google Earth Web using the local file
+    const webUrl = `https://earth.google.com/web/`;
+    await Linking.openURL(webUrl);
+    
+    // Show success message
+    Alert.alert(
+      'KML Loaded',
+      'The KML file has been prepared. Please open it in Google Earth from the app or web version.',
+      [
+        { 
+          text: 'Open in Browser', 
+          onPress: () => {
+            Linking.openURL(webUrl);
+          }
+        },
+        {
+          text: 'Open File',
+          onPress: async () => {
+            // Share the file to open with Google Earth
+            const shareResult = await shareAsync(localFilePath, {
+              mimeType: 'application/vnd.google-earth.kml+xml',
+              dialogTitle: 'Open with Google Earth',
+            });
+          }
+        },
+        { text: 'OK' }
+      ]
+    );
+    
+  } catch (error) {
+    console.error('Error opening KML:', error);
+    Alert.alert(
+      'Error',
+      'Failed to open KML file in Google Earth. Would you like to try opening the file directly?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Open Directly', 
+          onPress: () => {
+            Linking.openURL(kmlPath).catch(() => {
+              Alert.alert('Error', 'Unable to open the file');
+            });
+          }
+        }
+      ]
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
    const ordinals = ['First', 'Second', 'Third', 'Fourth', 'Fifth',"Sixth"];
 
