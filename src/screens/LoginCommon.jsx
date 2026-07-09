@@ -14,12 +14,13 @@ import {
   Alert,
   Dimensions,
   ImageBackground,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { commonAPICall, LOGIN_END_POINT, GENERATE_CAPTCHA } from '../utils/utils';
+import { commonAPICall, LOGIN_END_POINT, GENERATE_CAPTCHA, CHECKAPKVERSION } from '../utils/utils';
 import { login } from '../actions';
 import { showErrorToast, showSuccessToast } from '../utils/showToast';
 import { useNavigation } from '@react-navigation/native';
@@ -159,6 +160,58 @@ const LoginCommon = () => {
   const handleForgotPassword = () => {
     Alert.alert('Forgot Password', 'Please contact your administrator');
   };
+
+
+
+
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=org.indusaction.dlcap&hl=en_IN";
+
+const checkapkversion = async () => {
+  try {
+    const res = await commonAPICall(
+      CHECKAPKVERSION,
+      {
+        platform: "Android",
+        appVersion: "1.2.6",
+      },
+      "post",
+      dispatch
+    );
+
+    
+
+    
+
+    if (res.status === 200 && res.data.updateAvailable) {
+      Alert.alert(
+        "Update Available",
+        "A new version of the app is available. Please update to continue using the latest features and improvements.",
+        [
+          {
+            text: "Later",
+            style: "cancel",
+          },
+          {
+            text: "Update",
+            onPress: () => {
+              Linking.openURL(PLAY_STORE_URL);
+            },
+          },
+        ],
+        {
+          cancelable: false,
+        }
+      );
+    }
+  } catch (error) {
+    console.log("Version check error:", error);
+  }
+};
+
+useEffect(() => {
+  checkapkversion();
+}, []);
 
   return (
     <View style={styles.screen}>

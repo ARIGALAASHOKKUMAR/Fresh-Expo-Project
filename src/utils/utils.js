@@ -237,4 +237,4 @@ export const FIRE_TRUTHING = "api/user/";
 export const CREATENEWHARITHANDHRA="api/user/harithaAndhra/createHarithaAndhraEntry"
 export const GETHARITHAANDHRADETAILS="api/user/harithaAndhra/getHarithaAndhraEntryDetails"
 
-
+export const CHECKAPKVERSION="api/open/checkAppVersion"
