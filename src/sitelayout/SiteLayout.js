@@ -438,27 +438,26 @@ const SiteLayout = ({
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {/* <TouchableOpacity onPress={toggleSidebar}>
-              <Ionicons name="menu" size={28} color="#fff" />
-            </TouchableOpacity> */}
-            {/* <Image
-              source={labour_logo}
-              style={styles.logo}
-              resizeMode="contain"
-            /> */}
+            
             <View>
               <Text style={styles.headerTitle}>Haritha Andhra</Text>
-              {/* <Text style={styles.headerSubTitle}>
-                APEMCL, Govt. of A.P
-              </Text> */}
+              
             </View>
           </View>
 
-          <View style={styles.headerRight}>
 
-            <Text style={{color:"white",fontWeight:"bold",marginRight:"60px"}}>Welcome:{username}({roleName}){" "}</Text>
-          </View>
-          {showProfile && (
+<Text
+  style={{
+    color: "white",
+    fontWeight: "bold",
+    maxWidth: 270, // Maximum width
+    flexWrap: "wrap",
+    textAlign:"center",
+    marginRight:10
+  }}
+>
+  Welcome: {username} ({roleName})
+</Text>          {showProfile && (
               <TouchableOpacity
                 onPress={() => setProfileMenuVisible(!profileMenuVisible)}
                 style={{marginLeft:"20px"}}

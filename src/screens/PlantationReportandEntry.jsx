@@ -41,7 +41,7 @@ const PlantationReportandEntry = () => {
 
   useEffect(() => {
     fetchPlantations();
-  }, []);
+  }, [activeTab]);
 
   const handleAddSuccess = () => {
     setActiveTab('view');
@@ -97,7 +97,7 @@ const PlantationReportandEntry = () => {
           <Text style={styles.infoText}>Area: {item.plantation_area || 0} Ha</Text>
           <Text style={styles.spacer}>|</Text>
           <Icon name="stats-chart-outline" size={16} color="#2e7d32" />
-          <Text style={styles.infoText}>Plants: {item.total_plants || item.no_of_plants || 0}</Text>
+          <Text style={styles.infoText}>Plants: {item.total_no_of_plants || item.no_of_plants || 0}</Text>
         </View>
 
         {/* Row 6: In-charge / FRO Name */}
@@ -109,13 +109,16 @@ const PlantationReportandEntry = () => {
         </View>
 
         {/* Optional thumbnail (small) */}
-        {firstImage && (
-          <Image
-            source={{ uri: firstImage.replace(/"/g, '') }}
+        <View style={{display:"flex",flexDirection:"row",gap:"40px"}}>
+          {[1,2,3,4].map((each,index)=>(
+ <Image
+       source={{ uri: item[`image_${index + 1}`] }}
             style={styles.thumbnail}
             resizeMode="cover"
           />
-        )}
+          ))}
+        
+        </View>
       </View>
     );
   };
@@ -286,10 +289,11 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   thumbnail: {
-    width: '100%',
-    height: 120,
+    width: '25%',
+    height: 60,
     borderRadius: 6,
     marginTop: 8,
+    marginRight:2
   },
   emptyContainer: {
     paddingVertical: 60,

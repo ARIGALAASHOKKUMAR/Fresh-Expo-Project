@@ -198,8 +198,10 @@ const Vanamahotsav = () => {
       locationType:
         values.locationType === "forest" ? "FOREST" : "NON_FOREST",
       plantationType: Number(values.plantationType),
-      plantSpacing: Number(values.plantSpacing),
+      plantSpacingId: Number(values.plantSpacing),
+      otherPlantSpacing:values.otherPlantSpacing,
       plantationArea: values.area ? Number(values.area) : null,
+      kmlUpload:values.kmlFile,
 
       speciesDetails: values.speciesDetails.map((item) => ({
         species: Number(item.species),
@@ -486,6 +488,9 @@ const Vanamahotsav = () => {
       dispatch
     );
   };
+
+  console.log("kmlFile",formik.values.kmlFile);
+  
 
   // Open KML in Google Earth
   const openKMLInGoogleEarth = () => {
@@ -1017,6 +1022,8 @@ const Vanamahotsav = () => {
                   <Picker.Item label="Bund / Canal Plantation" value="3" />
                   <Picker.Item label="Agro Forestry / Horticulture" value="4" />
                   <Picker.Item label="Mangrove Plantation" value="6" />
+                   <Picker.Item label="Ultra High Density" value="7" />
+                    <Picker.Item label="Miyawaki" value="8" />
                   <Picker.Item label="Others" value="5" />
                 </Picker>
               </View>
@@ -1073,7 +1080,7 @@ const Vanamahotsav = () => {
             </View>
 
             {/* Scheme - Forest only */}
-            {locationType === 'forest' && (
+            {/* {locationType === 'forest' && ( */}
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Scheme <Text style={styles.star}>*</Text></Text>
                 <View style={[
@@ -1097,7 +1104,7 @@ const Vanamahotsav = () => {
                   <Text style={styles.errorText}>{formik.errors.scheme}</Text>
                 )}
               </View>
-            )}
+            {/* )} */}
 
             {/* Plant Spacing */}
             <View style={styles.formGroup}>
