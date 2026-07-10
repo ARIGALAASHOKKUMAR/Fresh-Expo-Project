@@ -457,7 +457,7 @@ const SiteLayout = ({
     marginRight:10
   }}
 >
-  Welcome: {userId} ({roleName})
+  {userId} ({roleName})
 </Text>          {showProfile && (
               <TouchableOpacity
                 onPress={() => setProfileMenuVisible(!profileMenuVisible)}
