@@ -178,25 +178,33 @@ const Vanamahotsav = () => {
     setLoading(true);
 
     const payload = {
-      distCode: Number(values.distCode),
-      mandalCode: Number(values.mandalCode),
-      villageCode: Number(values.villageCode),
-      plantationDate: values.plantationDate,
-      landmark: values.landmark || "test",
-      locationType:
-        values.locationType === "forest" ? "FOREST" : "NON_FOREST",
-      plantationType: Number(values.plantationType),
-      plantSpacingId: Number(values.plantSpacing),
-      otherPlantSpacing:values.otherPlantSpacing,
-      plantationArea: values.area ? Number(values.area) : null,
-      kmlUpload:values.kmlFile,
+  distCode: Number(values.distCode),
+  mandalCode: Number(values.mandalCode),
+  villageCode: Number(values.villageCode),
+  plantationDate: values.plantationDate,
+  landmark: values.landmark || "test",
+  locationType: values.locationType === "forest" ? "FOREST" : "NON_FOREST",
+  plantationType: Number(values.plantationType),
+  plantSpacingId: Number(values.plantSpacing),
+  otherPlantSpacing: values.otherPlantSpacing,
+  
+  // If plantation type is 2 or 3, send plantationLength, else send plantationArea
+  plantationArea: [2, 3].includes(Number(values.plantationType)) 
+    ? null 
+    : (values.area ? Number(values.area) : null),
+  
+  plantationLength: [2, 3].includes(Number(values.plantationType)) 
+    ? (values.area ? Number(values.area) : null) 
+    : null,
+  
+  lengthUnit: "km",
+  kmlUpload: values.kmlFile,
 
-      speciesDetails: values.speciesDetails.map((item) => ({
-        species: Number(item.species),
-        noOfPlants: Number(item.noOfPlants),
-      })),
-    };
-
+  speciesDetails: values.speciesDetails.map((item) => ({
+    species: Number(item.species),
+    noOfPlants: Number(item.noOfPlants),
+  })),
+};
     // ---------------- FOREST ----------------
     if (values.locationType === "forest") {
       payload.section = Number(values.section);
@@ -1094,8 +1102,8 @@ const Vanamahotsav = () => {
                   <Picker.Item label="Bund / Canal Plantation" value="3" />
                   <Picker.Item label="Agro Forestry / Horticulture" value="4" />
                   <Picker.Item label="Mangrove Plantation" value="6" />
-                   <Picker.Item label="Ultra High Density" value="7" />
-                    <Picker.Item label="Miyawaki" value="8" />
+                   <Picker.Item label="Ultra High Density" value="8" />
+                    <Picker.Item label="Miyawaki" value="7" />
                   <Picker.Item label="Others" value="5" />
                 </Picker>
               </View>

@@ -37,6 +37,8 @@ const PlantationReportandEntry = () => {
       const response = await commonAPICall(GETHARITHAANDHRADETAILS, {}, 'get', dispatch);
       if (response.status === 200 && response.data.status === 'success') {
         setData(response.data.HarithaAndhraEntryDetails || []);
+        console.log("response.data.HarithaAndhraEntryDetails ",response.data.HarithaAndhraEntryDetails );
+        
       } else {
         setData([]);
       }
@@ -135,8 +137,10 @@ const PlantationReportandEntry = () => {
         {/* Row 5: Area & Total Plants */}
         <View style={styles.cardRow}>
           <Icon name="resize-outline" size={16} color="#2e7d32" />
-          <Text style={styles.infoText}>Area: {item.plantation_area || 0} Ha</Text>
-          <Text style={styles.spacer}>|</Text>
+<Text style={styles.infoText}>
+  Area: {item.plantation_area ?? item.plantation_length}{" "}
+  {item.plantation_area ? "Ha" : "Km"}
+</Text>          <Text style={styles.spacer}>|</Text>
           <Icon name="stats-chart-outline" size={16} color="#2e7d32" />
           <Text style={styles.infoText}>Plants: {item.total_no_of_plants || item.no_of_plants || 0}</Text>
         </View>
