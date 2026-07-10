@@ -30,6 +30,8 @@ import {
 import ImageBucketRN from '../utils/ImageBucketRN';
 import { GetSpecies, GetNewMandals, new_dist, NewVillages, GetBeat, GetCompartment, GetBlock } from '../utils/CommonFunctions';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Feather } from '@expo/vector-icons';
+
 import { hideLoader, showLoader } from '../actions';
 
 const Vanamahotsav = () => {
@@ -663,7 +665,7 @@ const Vanamahotsav = () => {
       elevation: 4,
     }}
   >
-    <Icon name="trash-can-outline" size={18} color="white" />
+<Feather name="trash-2" size={18} color="white" />
   </TouchableOpacity>
 )}
 </View>

@@ -42,7 +42,8 @@ import {
 import SessionTime from "./SessionTime";
 import UserMessage from "./UserMessage";
 
-import Icon from "react-native-vector-icons/Feather";
+import { Feather } from '@expo/vector-icons';
+
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import labour_logo from "../../assets/harithalogo.png";
@@ -397,7 +398,7 @@ const SiteLayout = ({
                   activeOpacity={0.7}
                 >
                   <View style={[styles.sidebarMenuIcon, { backgroundColor: bg }]}>
-                    <Icon name={getIconName(parent.menuitemname)} size={18} color="#fff" />
+                    <Feather name={getIconName(parent.menuitemname)} size={18} color="#fff" />
                   </View>
                   <Text style={styles.sidebarMenuText} numberOfLines={2}>
                     {parent.menuitemname}
@@ -421,7 +422,7 @@ const SiteLayout = ({
               style={styles.sidebarFooterItem}
               onPress={openLogoutPopup}
             >
-              <Icon name="log-out" size={20} color="#DC2626" />
+              <Feather name="log-out" size={20} color="#DC2626" />
               <Text style={styles.sidebarFooterLogoutText}>Logout</Text>
             </TouchableOpacity>
           </View>
@@ -510,7 +511,7 @@ const SiteLayout = ({
                 )
               }
             >
-              <Icon name="user" size={18} color="#111827" />
+              <Feather name="user" size={18} color="#111827" />
               <Text style={styles.profileMenuText}>Profile</Text>
             </TouchableOpacity>
 
@@ -518,7 +519,7 @@ const SiteLayout = ({
               style={styles.profileMenuItem}
               onPress={openLogoutPopup}
             >
-              <Icon name="log-out" size={18} color="#DC2626" />
+              <Feather name="log-out" size={18} color="#DC2626" />
               <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
           </View>
