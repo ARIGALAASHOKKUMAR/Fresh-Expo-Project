@@ -45,7 +45,7 @@ export const showSuccessToast = (msg) => {
     showSprinkles: true,
     sprinkleStyle: 'stars',
     position: 'top',
-    topOffset: getTopOffset(),
+    topOffset: 1000,
     duration: 3000,
     textStyle: {
       ...compactToastConfig.textStyle,

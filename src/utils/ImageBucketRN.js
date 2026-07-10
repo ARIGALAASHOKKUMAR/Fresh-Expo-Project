@@ -214,7 +214,7 @@ async function openCamera(formik, path, name, size, dispatch) {
     // ✅ SHOW LOADER AFTER CAPTURE (better UX)
     dispatch(showLoader("Fetching location..."));
 
-    let addressText = null;
+    let locationData = null;
 
     try {
       const locPermission = await Location.requestForegroundPermissionsAsync();
@@ -224,15 +224,20 @@ async function openCamera(formik, path, name, size, dispatch) {
           latitude: loc.coords.latitude,
           longitude: loc.coords.longitude,
         });
+        
         if (address.length > 0) {
           const place = address[0];
-          addressText = [
-            place.formattedAddress,
-            `Lat:${loc.coords.latitude}`,
-            `Lng:${loc.coords.longitude}`,
-          ]
+          locationData = {
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+            locationName: [
+              place.formattedAddress,
+              `Lat:${loc.coords.latitude}`,
+              `Lng:${loc.coords.longitude}`,
+            ]
             .filter(Boolean)
-            .join(" - ");
+            .join(" - ")
+          };
         }
       }
     } catch (e) {
@@ -241,9 +246,15 @@ async function openCamera(formik, path, name, size, dispatch) {
 
     dispatch(hideLoader());
 
-    // if (addressText) {
-    //   formik.setFieldValue(`${name}Location`, addressText);
-    // }
+    // ✅ SET ALL FIELDS AT ONCE
+    if (locationData) {
+      // Extract the base name without array index
+      // Example: "imageDetails[0].imagePath" -> "imageDetails[0]"
+      const baseName = name.substring(0, name.lastIndexOf('.'));
+      formik.setFieldValue(`${baseName}.latitude`, locationData.latitude);
+      formik.setFieldValue(`${baseName}.longitude`, locationData.longitude);
+      formik.setFieldValue(`${baseName}.locationName`, locationData.locationName);
+    }
 
     await uploadFile(file, formik, path, name, size, dispatch);
   } catch (err) {

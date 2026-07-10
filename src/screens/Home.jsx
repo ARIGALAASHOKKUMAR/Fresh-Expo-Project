@@ -30,6 +30,7 @@ import {
 import ImageBucketRN from '../utils/ImageBucketRN';
 import { GetSpecies, GetNewMandals, new_dist, NewVillages, GetBeat, GetCompartment, GetBlock } from '../utils/CommonFunctions';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { hideLoader, showLoader } from '../actions';
 
 const Vanamahotsav = () => {
   const dispatch = useDispatch();
@@ -462,13 +463,7 @@ const Vanamahotsav = () => {
       dispatch
     );
     
-    // Get location with details after image capture
-    const locationData = await getLocationWithDetails();
-    if (locationData) {
-      formik.setFieldValue(latitudeFieldName, locationData.latitude);
-      formik.setFieldValue(longitudeFieldName, locationData.longitude);
-      formik.setFieldValue(locationNameFieldName, locationData.locationName);
-    }
+    
   };
 
   // Handle KML Upload
