@@ -138,7 +138,7 @@ const PlantationReportandEntry = () => {
         <View style={styles.cardRow}>
           <Icon name="resize-outline" size={16} color="#2e7d32" />
 <Text style={styles.infoText}>
-  Area: {item.plantation_area ?? item.plantation_length}{" "}
+  {item?.plantation_area?"Area":"Length"} {item.plantation_area ?? item.plantation_length}{" "}
   {item.plantation_area ? "Ha" : "Km"}
 </Text>          <Text style={styles.spacer}>|</Text>
           <Icon name="stats-chart-outline" size={16} color="#2e7d32" />
