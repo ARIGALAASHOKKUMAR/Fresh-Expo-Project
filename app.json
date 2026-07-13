@@ -14,10 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.MissionHarithaAndhra"
+      "bundleIdentifier": "in.apcfss.apfd.missionharithaandhra"
     },
     "android": {
-      "package": "com.anonymous.MissionHarithaAndhra",
+      "package": "in.apcfss.apfd.missionharithaandhra",
       "adaptiveIcon": {
         "foregroundImage": "./assets/512*512logo.png",
         "backgroundColor": "#E6F4FE",

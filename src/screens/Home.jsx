@@ -347,53 +347,7 @@ const Vanamahotsav = () => {
   };
 
   // Get location with latitude, longitude, and address
-  const getLocationWithDetails = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location permission is required');
-        return null;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
-      // Reverse geocode to get address
-      let locationName = '';
-      try {
-        const geocode = await Location.reverseGeocodeAsync({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
-        
-        if (geocode.length > 0) {
-          const address = geocode[0];
-          const parts = [];
-          if (address.name) parts.push(address.name);
-          if (address.street) parts.push(address.street);
-          if (address.district) parts.push(address.district);
-          if (address.city) parts.push(address.city);
-          if (address.region) parts.push(address.region);
-          if (address.country) parts.push(address.country);
-          locationName = parts.join(', ');
-        }
-      } catch (geocodeError) {
-        console.log('Geocoding error:', geocodeError);
-        locationName = `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
-      }
-
-      return {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        locationName: locationName,
-      };
-    } catch (error) {
-      console.log('Error getting location:', error);
-      Alert.alert('Error', 'Failed to get location');
-      return null;
-    }
-  };
+  
 
   // Add Species Field
   const addSpeciesField = () => {
@@ -481,7 +435,6 @@ const Vanamahotsav = () => {
     );
   };
 
-  console.log("kmlFile",formik.values.kmlFile);
   
 
   // Open KML in Google Earth

@@ -17,6 +17,12 @@ import PlantationReportandEntry from "./screens/PlantationReportandEntry";
 
 const Stack = createNativeStackNavigator();
 
+
+
+// s CN=APCFSS MINI, OU=APCFSS, O=APCFSS, L=AMARAVATHI, ST=ANDHRA PRADESH, C=IN correct?
+//   [no]:  PWD:Apcfss@786
+
+
 export default function Routes() {
   return (
     <Provider store={store}>

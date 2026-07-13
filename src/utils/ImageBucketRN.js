@@ -196,6 +196,8 @@ async function openCamera(formik, path, name, size, dispatch) {
   try {
     // ✅ OPEN CAMERA FIRST (NO DELAY)
     const permission = await ImagePicker.requestCameraPermissionsAsync();
+          const locPermission = await Location.requestForegroundPermissionsAsync();
+
 
     if (!permission.granted) {
       Alert.alert("Permission required", "Camera access is needed");
@@ -217,7 +219,6 @@ async function openCamera(formik, path, name, size, dispatch) {
     let locationData = null;
 
     try {
-      const locPermission = await Location.requestForegroundPermissionsAsync();
       if (locPermission.granted) {
         const loc = await Location.getCurrentPositionAsync({});
         const address = await Location.reverseGeocodeAsync({
