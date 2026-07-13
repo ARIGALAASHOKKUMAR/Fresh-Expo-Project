@@ -143,7 +143,11 @@ const LoginCommon = () => {
         showSuccessToast(welcomeMsg);
         navigation.navigate('HOME');
       }
+      else{
+         generateCaptcha()
+      }
     } catch (error) {
+      generateCaptcha()
       if (error.response) {
         setCaptchaImage(error.response?.data?.captcha || '');
         setStoredCaptchaId(error.response?.data?.captchaId || '');
