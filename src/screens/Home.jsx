@@ -261,7 +261,6 @@ const Vanamahotsav = () => {
       payload.kmlFile = values.kmlFile;
     }
 
-    console.log("Payload => ", JSON.stringify(payload, null, 2));
 
     const response = await commonAPICall(
       CREATENEWHARITHANDHRA,
@@ -682,13 +681,27 @@ const Vanamahotsav = () => {
           return (
             <View key={speciesIndex} style={styles.speciesCard}>
               <View style={styles.speciesCardHeader}>
-                <Text style={styles.speciesCardTitle}>Species {speciesIndex + 1}</Text>
+                <Text style={styles.speciesCardTitle}>Species Details - {speciesIndex + 1}</Text>
                 {speciesDetails.length > 1 && (
                   <TouchableOpacity
-                    style={styles.removeSpeciesButton}
+                    style={{
+      marginLeft: 5,
+      width: 30,
+      height: 30,
+      borderRadius: 8,
+      backgroundColor: "#FF3B30",
+      justifyContent: "center",
+      alignItems: "center",
+      shadowColor: "#FF3B30",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 4,
+    }}
                     onPress={() => removeSpeciesField(speciesIndex)}
                   >
-                    <Text style={styles.removeIcon}>❌</Text>
+                   <Feather name="trash-2" size={18} color="white" />
+
                   </TouchableOpacity>
                 )}
               </View>
@@ -743,6 +756,7 @@ const Vanamahotsav = () => {
                   ]}
                   placeholder="Enter number of plants"
                   keyboardType="numeric"
+                  maxLength={4}
                   value={String(species.noOfPlants || '')}
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9]/g, '');
@@ -1298,20 +1312,17 @@ const Vanamahotsav = () => {
 
             {/* Species Details Section */}
             <View style={styles.speciesSection}>
-              <View style={styles.speciesHeader}>
+              {/* <View style={styles.speciesHeader}>
                 <Text style={styles.speciesEmoji}>🌳</Text>
                 <Text style={styles.speciesTitle}>Species Details</Text>
-              </View>
+              </View> */}
 
               {renderSpeciesDetails()}
             </View>
 
             {/* Images Section */}
             <View style={styles.imagesSection}>
-              <View style={styles.imagesHeader}>
-                <Text style={styles.imagesEmoji}>📸</Text>
-                <Text style={styles.imagesTitle}>Plantation Photos</Text>
-              </View>
+              
 
               {renderImages()}
             </View>

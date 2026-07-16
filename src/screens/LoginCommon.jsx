@@ -146,6 +146,7 @@ const LoginCommon = () => {
       }
       else{
          generateCaptcha()
+         formik.setFieldValue("captcha","")
       }
     } catch (error) {
       generateCaptcha()
@@ -289,7 +290,7 @@ source={require('../../assets/harithalatest.png')}
           {/* Background Decorations */}
           
           {/* Card */}
-          <View style={{marginTop:420}}>
+          <View style={{marginTop:480}}>
             {/* Logo */}
             
 
@@ -415,12 +416,17 @@ source={require('../../assets/harithalatest.png')}
               disabled={loading}
               activeOpacity={0.85}
             >
+
               
                   <Text style={styles.loginText}>SIGN IN</Text>
                   <Ionicons name="arrow-forward" size={22} color="#fff" style={{ marginLeft: 10 }} />
             </TouchableOpacity>
           </View>
+                            <Text style={{marginTop:20,textAlign:"center",color:"green",fontWeight:"bold"}}>Powered by APCFSS</Text>
+                            <Text style={{textAlign:"center",color:"green",fontWeight:"bold"}}>v 1.0.0</Text>
+
         </ScrollView>
+
       </KeyboardAvoidingView>
       </ImageBackground>
     </View>

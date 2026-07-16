@@ -37,7 +37,6 @@ const PlantationReportandEntry = () => {
       const response = await commonAPICall(GETHARITHAANDHRADETAILS, {}, 'get', dispatch);
       if (response.status === 200 && response.data.status === 'success') {
         setData(response.data.HarithaAndhraEntryDetails || []);
-        console.log("response.data.HarithaAndhraEntryDetails ",response.data.HarithaAndhraEntryDetails );
         
       } else {
         setData([]);
