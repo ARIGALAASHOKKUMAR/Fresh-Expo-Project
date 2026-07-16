@@ -192,10 +192,7 @@ const checkapkversion = async () => {
         "Update Available",
         "A new version of the app is available. Please update to continue using the latest features and improvements.",
         [
-          {
-            text: "Later",
-            style: "cancel",
-          },
+          
           {
             text: "Update",
             onPress: () => {
