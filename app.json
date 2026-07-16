@@ -4,7 +4,7 @@
     "slug": "Mission-Haritha-Andhra",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/512*512logo.png",
+    "icon": "./assets/5512_512logo-512x512.png",
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",
     "splash": {
@@ -19,13 +19,13 @@
     "android": {
       "package": "in.apcfss.apfd.missionharithaandhra",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/512*512logo.png",
+        "foregroundImage": "./assets/5512_512logo-512x512.png",
         "backgroundColor": "#E6F4FE",
-        "monochromeImage": "./assets/512*512logo.png"
+        "monochromeImage": "./assets/512_512logo-512x512.png"
       }
     },
     "web": {
-      "favicon": "./assets/512*512logo.png"
+      "favicon": "./assets/512_512logo-512x512.png"
     },
     "plugins": [
       "@react-native-community/datetimepicker"
