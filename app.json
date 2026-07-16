@@ -4,7 +4,7 @@
     "slug": "Mission-Haritha-Andhra",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/5512_512logo-512x512.png",
+    "icon": "./assets/512_512logo-512x512.png",
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",
     "splash": {
@@ -19,7 +19,7 @@
     "android": {
       "package": "in.apcfss.apfd.missionharithaandhra",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/5512_512logo-512x512.png",
+        "foregroundImage": "./assets/512_512logo-512x512.png",
         "backgroundColor": "#E6F4FE",
         "monochromeImage": "./assets/512_512logo-512x512.png"
       }
