@@ -286,14 +286,35 @@ async function openGallery(formik, path, name, size,dispatch) {
 }
 
 // ✅ DOCUMENT
-async function pickDocument(formik, path, name, size,dispatch) {
-  const result = await DocumentPicker.getDocumentAsync({});
+async function pickDocument(formik, path, name, size, dispatch) {
+  try {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: [
+        'application/vnd.google-earth.kml+xml',
+        'application/xml',
+        'text/xml'
+      ],
+      copyToCacheDirectory: true,
+    });
 
-  if (result.canceled) return;
+    if (result.canceled) return;
 
-  const file = result.assets[0];
-
-  await uploadFile(file, formik, path, name, size, dispatch);
+    const file = result.assets[0];
+    
+    // Double-check extension (for safety)
+    if (file?.name && file.name.toLowerCase().endsWith('.kml')) {
+      await uploadFile(file, formik, path, name, size, dispatch);
+    } else {
+      Alert.alert(
+        'Invalid File Type',
+        'Please select only KML files (.kml)',
+        [{ text: 'OK' }]
+      );
+    }
+  } catch (error) {
+    console.error('Error picking document:', error);
+    Alert.alert('Error', 'Failed to pick file');
+  }
 }
 
 // ✅ MAIN FUNCTION

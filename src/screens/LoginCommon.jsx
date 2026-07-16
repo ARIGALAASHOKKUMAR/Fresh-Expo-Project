@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ import * as Yup from 'yup';
 import { commonAPICall, LOGIN_END_POINT, GENERATE_CAPTCHA, CHECKAPKVERSION } from '../utils/utils';
 import { login } from '../actions';
 import { showErrorToast, showSuccessToast } from '../utils/showToast';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -170,16 +170,11 @@ const LoginCommon = () => {
 
 
 
-
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=org.indusaction.dlcap&hl=en_IN";
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=org.indusaction.dlcap&hl=en_IN";
 const CUSTOM_APK_URL = "https://forests.ap.gov.in/harithaandhraapk";
-const CHECK_INTERVAL = 30000; // Check every 30 seconds
-const MAX_RETRIES = 5;
 
-let retryCount = 0;
-let checkInterval = null;
-
-const checkapkversion = async (showAlert = true) => {
+const checkapkversion = async () => {
   try {
     const res = await commonAPICall(
       CHECKAPKVERSION,
@@ -192,20 +187,10 @@ const checkapkversion = async (showAlert = true) => {
     );
 
     if (res.status === 200 && res.data.updateAvailable) {
-      retryCount = 0; // Reset retry count on new update
       showUpdateAlert();
-    } else {
-      // No update available, clear any existing intervals
-      clearInterval(checkInterval);
-      retryCount = 0;
     }
   } catch (error) {
     console.log("Version check error:", error);
-    // Retry on error if not exceeded max retries
-    if (retryCount < MAX_RETRIES) {
-      retryCount++;
-      setTimeout(checkapkversion, 5000);
-    }
   }
 };
 
@@ -214,60 +199,35 @@ const showUpdateAlert = () => {
     "Update Available",
     "A new version of the app is available. Please update to continue using the latest features and improvements.",
     [
-      // {
-      //   text: "Update via Play Store",
-      //   onPress: () => {
-      //     Linking.openURL(PLAY_STORE_URL);
-      //     // Don't dismiss the alert, keep checking
-      //     startPeriodicCheck();
-      //   },
-      // },
       {
         text: "Download APK",
-        onPress: () => {
-          Linking.openURL(CUSTOM_APK_URL);
-          // Don't dismiss the alert, keep checking
-          startPeriodicCheck();
-        },
+        onPress: () => Linking.openURL(CUSTOM_APK_URL),
       },
     ],
     {
       cancelable: false,
-      onDismiss: () => {
-        // This won't be called since cancelable is false
-      }
     }
   );
 };
 
-const startPeriodicCheck = () => {
-  // Clear any existing interval
-  clearInterval(checkInterval);
-  
-  // Start periodic check
-  checkInterval = setInterval(() => {
-    checkapkversion(false);
-  }, CHECK_INTERVAL);
-};
 
-// Listen for app state changes to re-check when user returns
-useEffect(() => {
-  const subscription = AppState.addEventListener('change', (nextAppState) => {
-    if (nextAppState === 'active') {
-      // Re-check when app becomes active again
-      checkapkversion(false);
-    }
-  });
+// UpdateChecker.js or AppVersionCheck.js
 
-  // Initial check
-  checkapkversion();
+useFocusEffect(
+  useCallback(() => {
+    checkapkversion();
 
-  return () => {
-    subscription.remove();
-    clearInterval(checkInterval);
-  };
-}, []);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        checkapkversion();
+      }
+    });
 
+    return () => {
+      subscription.remove();
+    };
+  }, [])
+);
   return (
     <View style={styles.screen}>
       <ImageBackground 

@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "in.apcfss.apfd.missionharithaandhra"
+      "bundleIdentifier": "in.apcfss.apfd.missionharithaandhra",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "in.apcfss.apfd.missionharithaandhra",
@@ -29,6 +32,11 @@
     },
     "plugins": [
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "763e7701-0abf-43ca-a080-bb85c7a2d516"
+      }
+    }
   }
 }
