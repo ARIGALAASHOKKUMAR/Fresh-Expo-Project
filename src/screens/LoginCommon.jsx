@@ -15,6 +15,7 @@ import {
   Dimensions,
   ImageBackground,
   Linking,
+  AppState
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
@@ -168,10 +169,16 @@ const LoginCommon = () => {
 
 
 
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=org.indusaction.dlcap&hl=en_IN";
 
-const checkapkversion = async () => {
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=org.indusaction.dlcap&hl=en_IN";
+const CUSTOM_APK_URL = "https://forests.ap.gov.in/harithaandhraapk";
+const CHECK_INTERVAL = 30000; // Check every 30 seconds
+const MAX_RETRIES = 5;
+
+let retryCount = 0;
+let checkInterval = null;
+
+const checkapkversion = async (showAlert = true) => {
   try {
     const res = await commonAPICall(
       CHECKAPKVERSION,
@@ -183,35 +190,81 @@ const checkapkversion = async () => {
       dispatch
     );
 
-    
-
-    
-
     if (res.status === 200 && res.data.updateAvailable) {
-      Alert.alert(
-        "Update Available",
-        "A new version of the app is available. Please update to continue using the latest features and improvements.",
-        [
-          
-          {
-            text: "Update",
-            onPress: () => {
-              Linking.openURL(PLAY_STORE_URL);
-            },
-          },
-        ],
-        {
-          cancelable: false,
-        }
-      );
+      retryCount = 0; // Reset retry count on new update
+      showUpdateAlert();
+    } else {
+      // No update available, clear any existing intervals
+      clearInterval(checkInterval);
+      retryCount = 0;
     }
   } catch (error) {
     console.log("Version check error:", error);
+    // Retry on error if not exceeded max retries
+    if (retryCount < MAX_RETRIES) {
+      retryCount++;
+      setTimeout(checkapkversion, 5000);
+    }
   }
 };
 
+const showUpdateAlert = () => {
+  Alert.alert(
+    "Update Available",
+    "A new version of the app is available. Please update to continue using the latest features and improvements.",
+    [
+      // {
+      //   text: "Update via Play Store",
+      //   onPress: () => {
+      //     Linking.openURL(PLAY_STORE_URL);
+      //     // Don't dismiss the alert, keep checking
+      //     startPeriodicCheck();
+      //   },
+      // },
+      {
+        text: "Download APK",
+        onPress: () => {
+          Linking.openURL(CUSTOM_APK_URL);
+          // Don't dismiss the alert, keep checking
+          startPeriodicCheck();
+        },
+      },
+    ],
+    {
+      cancelable: false,
+      onDismiss: () => {
+        // This won't be called since cancelable is false
+      }
+    }
+  );
+};
+
+const startPeriodicCheck = () => {
+  // Clear any existing interval
+  clearInterval(checkInterval);
+  
+  // Start periodic check
+  checkInterval = setInterval(() => {
+    checkapkversion(false);
+  }, CHECK_INTERVAL);
+};
+
+// Listen for app state changes to re-check when user returns
 useEffect(() => {
+  const subscription = AppState.addEventListener('change', (nextAppState) => {
+    if (nextAppState === 'active') {
+      // Re-check when app becomes active again
+      checkapkversion(false);
+    }
+  });
+
+  // Initial check
   checkapkversion();
+
+  return () => {
+    subscription.remove();
+    clearInterval(checkInterval);
+  };
 }, []);
 
   return (
