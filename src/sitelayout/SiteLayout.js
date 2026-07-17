@@ -47,6 +47,7 @@ import { Feather } from '@expo/vector-icons';
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import labour_logo from "../../assets/harithalogo.png";
+import { ToastProvider } from "react-native-sprinkle-toast";
 
 const { width, height } = Dimensions.get("window");
 
@@ -435,6 +436,8 @@ const SiteLayout = ({
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#0F172A" barStyle="light-content" />
 
+      <ToastProvider>
+
       <View style={styles.container}>
         {/* HEADER */}
         <View style={styles.header}>
@@ -659,6 +662,7 @@ const SiteLayout = ({
           </View>
         </View>
       </Modal>
+      </ToastProvider>
     </SafeAreaView>
   );
 };
