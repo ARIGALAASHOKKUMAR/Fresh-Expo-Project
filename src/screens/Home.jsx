@@ -756,7 +756,7 @@ const Vanamahotsav = () => {
                   ]}
                   placeholder="Enter number of plants"
                   keyboardType="numeric"
-                  maxLength={4}
+                  maxLength={5}
                   value={String(species.noOfPlants || '')}
                   onChangeText={(text) => {
                     const numericText = text.replace(/[^0-9]/g, '');
