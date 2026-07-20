@@ -382,7 +382,7 @@ source={require('../../assets/harithalatest.png')}
                   <Ionicons name="arrow-forward" size={22} color="#fff" style={{ marginLeft: 10 }} />
             </TouchableOpacity>
           </View>
-                            <Text style={{marginTop:20,textAlign:"center",color:"green",fontWeight:"bold"}}>Powered by APCFSS</Text>
+                            <Text style={{marginTop:20,textAlign:"center",color:"green",fontWeight:"bold"}}>Andhra Pradesh Forest Department</Text>
                             <Text style={{textAlign:"center",color:"green",fontWeight:"bold"}}>v 1.0.0</Text>
 
         </ScrollView>
