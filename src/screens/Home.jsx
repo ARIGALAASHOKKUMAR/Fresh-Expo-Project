@@ -811,7 +811,6 @@ const Vanamahotsav = () => {
 
   const getVillages= async(val)=>{
 
-    console.log("`${HARIVILLAGES}=${formik.values.distCode}&mandalCode=${val}`",`${HARIVILLAGES}?distCode=${formik.values.distCode}&mandalCode=${val}`);
     
 const res = await commonAPICall(
   `${HARIVILLAGES}?distCode=${formik.values.distCode}&mandalCode=${val}`,
@@ -971,7 +970,7 @@ const res = await commonAPICall(
                   }}
                   style={styles.picker}
                 >
- <Picker.Item label="--select--" value="" />
+ <Picker.Item label="--select--" value="0" />
                   {dists.map((dist) => (
                     <Picker.Item key={dist.dist_code} label={dist.dist_name} value={dist.dist_code} />
                   ))}
@@ -997,7 +996,7 @@ const res = await commonAPICall(
                   }}
                   style={styles.picker}
                 >
-                  <Picker.Item label="---Select---" value="" />
+                  <Picker.Item label="---Select---" value="0" />
                   {mandals.map((m) => (
                     <Picker.Item key={m.mandal_code} label={m.mandal_name} value={m.mandal_code} />
                   ))}

@@ -383,7 +383,7 @@ source={require('../../assets/harithalatest.png')}
             </TouchableOpacity>
           </View>
                             <Text style={{marginTop:20,textAlign:"center",color:"green",fontWeight:"bold"}}>Andhra Pradesh Forest Department</Text>
-                            <Text style={{textAlign:"center",color:"green",fontWeight:"bold"}}>v 1.0.0</Text>
+                            <Text style={{textAlign:"center",color:"green",fontWeight:"bold"}}>v 1.0.1</Text>
 
         </ScrollView>
 
