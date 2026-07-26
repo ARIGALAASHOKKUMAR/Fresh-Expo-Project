@@ -238,3 +238,7 @@ export const CREATENEWHARITHANDHRA="api/user/harithaAndhra/createHarithaAndhraEn
 export const GETHARITHAANDHRADETAILS="api/user/harithaAndhra/getHarithaAndhraEntryDetails"
 
 export const CHECKAPKVERSION="api/open/checkAppVersion"
+
+export const HARIDISTS = "api/user/v1/districts"
+export const HARIMANDALS = "api/user/v1/mandals?distCode="
+export const HARIVILLAGES = "api/user/v1/villages"

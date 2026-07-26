@@ -23,6 +23,9 @@ import {
   commonAPICall,
   CONTEXT_HEADING,
   CREATENEWHARITHANDHRA,
+  HARIDISTS,
+  HARIMANDALS,
+  HARIVILLAGES,
   SCHEMES,
   VanamahotsavamEntry,
   VANASECTIONS,
@@ -37,13 +40,12 @@ import { hideLoader, showLoader } from '../actions';
 const Vanamahotsav = () => {
   const dispatch = useDispatch();
   const state = useSelector((s) => s.LoginReducer);
-  const { districts, roleId } = state;
+  
   
   const [speciesList, setSpeciesList] = useState([]);
   const [section, setSection] = useState([]);
   const [scheme, setScheme] = useState([]);
-  const [mandal, setMandal] = useState([]);
-  const [village, setVillage] = useState([]);
+  
   const [districtCode, setDistrictCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -53,6 +55,9 @@ const Vanamahotsav = () => {
   const [block, setBlock] = useState([]);
 
   // Determine location type based on roleId
+
+  const roleId = useSelector((state)=>state.LoginReducer.roleId)
+
   const locationType = roleId === 6 ? 'forest' : 'nonforest';
 
   // Validation Schema
@@ -786,6 +791,42 @@ const Vanamahotsav = () => {
     );
   };
 
+  const [dists,setDists] = useState([])
+  const [mandals,setMandals] = useState([])
+  const [villages,setVillages] = useState([])
+
+  const getDists = async()=>{
+    const res = await commonAPICall(HARIDISTS,{},"get",dispatch)
+    if(res.status === 200){
+      setDists(res.data.District_List)
+    }
+  }
+
+  const getMandals = async(val)=>{
+    const res = await commonAPICall(HARIMANDALS+val,{},"get",dispatch)
+    if(res.status === 200){
+      setMandals(res.data.Mandal_List)
+    }
+  }
+
+  const getVillages= async(val)=>{
+
+    console.log("`${HARIVILLAGES}=${formik.values.distCode}&mandalCode=${val}`",`${HARIVILLAGES}?distCode=${formik.values.distCode}&mandalCode=${val}`);
+    
+const res = await commonAPICall(
+  `${HARIVILLAGES}?distCode=${formik.values.distCode}&mandalCode=${val}`,
+  {},
+  "get",
+  dispatch
+);    if(res.status === 200){
+      setVillages(res.data.Village_List)
+    }
+  }
+
+  useEffect(()=>{
+    getDists()
+  },[])
+
   return (
     <ScrollView style={styles.container}>
       <View>
@@ -923,15 +964,16 @@ const Vanamahotsav = () => {
                   selectedValue={formik.values.distCode}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('distCode', itemValue);
-                    GetNewMandals(itemValue, setMandal, setVillage, dispatch);
+                    getMandals(itemValue);
                     formik.setFieldValue('mandalCode', '');
                     formik.setFieldValue('villageCode', '');
                     setDistrictCode(itemValue);
                   }}
                   style={styles.picker}
                 >
-                  {new_dist.map((dist) => (
-                    <Picker.Item key={dist.dist_code} label={dist.dist_name} value={String(dist.dist_code)} />
+ <Picker.Item label="--select--" value="" />
+                  {dists.map((dist) => (
+                    <Picker.Item key={dist.dist_code} label={dist.dist_name} value={dist.dist_code} />
                   ))}
                 </Picker>
               </View>
@@ -951,13 +993,13 @@ const Vanamahotsav = () => {
                   selectedValue={formik.values.mandalCode}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('mandalCode', itemValue);
-                    NewVillages(itemValue, setVillage, dispatch, districtCode);
+                    getVillages(itemValue);
                   }}
                   style={styles.picker}
                 >
                   <Picker.Item label="---Select---" value="" />
-                  {mandal.map((m) => (
-                    <Picker.Item key={m.mandal_code} label={m.mandal_name} value={String(m.mandal_code)} />
+                  {mandals.map((m) => (
+                    <Picker.Item key={m.mandal_code} label={m.mandal_name} value={m.mandal_code} />
                   ))}
                 </Picker>
               </View>
@@ -981,8 +1023,8 @@ const Vanamahotsav = () => {
                   style={styles.picker}
                 >
                   <Picker.Item label="---Select---" value="" />
-                  {village.map((v) => (
-                    <Picker.Item key={v.village_code} label={v.village_name} value={String(v.village_code)} />
+                  {villages.map((v) => (
+                    <Picker.Item key={v.village_code} label={v.village_name} value={v.village_code} />
                   ))}
                 </Picker>
               </View>
