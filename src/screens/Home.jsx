@@ -339,6 +339,8 @@ const Vanamahotsav = () => {
     },
     validationSchema: validationSchema,
     onSubmit: HandleSubmit,
+    validateOnChange: false, // Don't validate on every change
+    validateOnBlur: true, // Validate on blur
   });
 
   // Handle Date Change
@@ -348,6 +350,8 @@ const Vanamahotsav = () => {
     setTempDate(currentDate);
     const formattedDate = currentDate.toISOString().split('T')[0];
     formik.setFieldValue('plantationDate', formattedDate);
+    // Clear the error for this field when value changes
+    formik.setFieldError('plantationDate', undefined);
   };
 
   // Get location with latitude, longitude, and address
@@ -423,7 +427,10 @@ const Vanamahotsav = () => {
       dispatch
     );
     
-    
+    // Clear the error for this image field after successful capture
+    formik.setFieldError(`imageDetails[${index}].imagePath`, undefined);
+    formik.setFieldError(`imageDetails[${index}].latitude`, undefined);
+    formik.setFieldError(`imageDetails[${index}].longitude`, undefined);
   };
 
   // Handle KML Upload
@@ -572,6 +579,7 @@ const Vanamahotsav = () => {
           const longitudeFieldName = `imageDetails[${index}].longitude`;
           const locationNameFieldName = `imageDetails[${index}].locationName`;
           
+          // Only show error if field is touched AND has an error
           const imageError = formik.touched.imageDetails?.[index]?.imagePath && 
                            formik.errors.imageDetails?.[index]?.imagePath;
           const latError = formik.touched.imageDetails?.[index]?.latitude && 
@@ -680,6 +688,7 @@ const Vanamahotsav = () => {
     return (
       <View>
         {speciesDetails.map((species, speciesIndex) => {
+          // Only show errors if the field is touched and has an error
           const speciesErrors = formik.errors.speciesDetails?.[speciesIndex] || {};
           const speciesTouched = formik.touched.speciesDetails?.[speciesIndex] || {};
           
@@ -724,6 +733,8 @@ const Vanamahotsav = () => {
                       const updatedSpecies = [...speciesDetails];
                       updatedSpecies[speciesIndex].species = itemValue;
                       formik.setFieldValue('speciesDetails', updatedSpecies);
+                      // Clear the error for this specific field
+                      formik.setFieldError(`speciesDetails[${speciesIndex}].species`, undefined);
                     }}
                     style={styles.picker}
                   >
@@ -768,6 +779,8 @@ const Vanamahotsav = () => {
                     const updatedSpecies = [...speciesDetails];
                     updatedSpecies[speciesIndex].noOfPlants = numericText;
                     formik.setFieldValue('speciesDetails', updatedSpecies);
+                    // Clear the error for this specific field
+                    formik.setFieldError(`speciesDetails[${speciesIndex}].noOfPlants`, undefined);
                   }}
                   onBlur={() => {
                     formik.setFieldTouched(`speciesDetails[${speciesIndex}].noOfPlants`, true);
@@ -803,14 +816,17 @@ const Vanamahotsav = () => {
   }
 
   const getMandals = async(val)=>{
+    if(val!==""){
     const res = await commonAPICall(HARIMANDALS+val,{},"get",dispatch)
     if(res.status === 200){
       setMandals(res.data.Mandal_List)
     }
   }
+  }
 
   const getVillages= async(val)=>{
 
+    if(val!==""){
     
 const res = await commonAPICall(
   `${HARIVILLAGES}?distCode=${formik.values.distCode}&mandalCode=${val}`,
@@ -821,6 +837,7 @@ const res = await commonAPICall(
       setVillages(res.data.Village_List)
     }
   }
+}
 
   useEffect(()=>{
     getDists()
@@ -861,6 +878,8 @@ const res = await commonAPICall(
                       selectedValue={formik.values.section}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('section', itemValue);
+                        // Clear the error when value changes
+                        formik.setFieldError('section', undefined);
                         GetBeat(itemValue, setBeat, setCompartment, setBlock, dispatch);
                       }}
                       style={styles.picker}
@@ -886,6 +905,8 @@ const res = await commonAPICall(
                       selectedValue={formik.values.beat}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('beat', itemValue);
+                        // Clear the error when value changes
+                        formik.setFieldError('beat', undefined);
                         GetCompartment(itemValue, setCompartment, setBlock, dispatch);
                       }}
                       style={styles.picker}
@@ -911,6 +932,8 @@ const res = await commonAPICall(
                       selectedValue={formik.values.compartment}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('compartment', itemValue);
+                        // Clear the error when value changes
+                        formik.setFieldError('compartment', undefined);
                         GetBlock(itemValue, setBlock, dispatch, formik.values.beat);
                       }}
                       style={styles.picker}
@@ -936,6 +959,8 @@ const res = await commonAPICall(
                       selectedValue={formik.values.block}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('block', itemValue);
+                        // Clear the error when value changes
+                        formik.setFieldError('block', undefined);
                       }}
                       style={styles.picker}
                     >
@@ -963,6 +988,8 @@ const res = await commonAPICall(
                   selectedValue={formik.values.distCode}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('distCode', itemValue);
+                    // Clear the error when value changes
+                    formik.setFieldError('distCode', undefined);
                     getMandals(itemValue);
                     formik.setFieldValue('mandalCode', '');
                     formik.setFieldValue('villageCode', '');
@@ -970,7 +997,7 @@ const res = await commonAPICall(
                   }}
                   style={styles.picker}
                 >
- <Picker.Item label="--select--" value="0" />
+ <Picker.Item label="--select--" value="" />
                   {dists.map((dist) => (
                     <Picker.Item key={dist.dist_code} label={dist.dist_name} value={dist.dist_code} />
                   ))}
@@ -992,11 +1019,13 @@ const res = await commonAPICall(
                   selectedValue={formik.values.mandalCode}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('mandalCode', itemValue);
+                    // Clear the error when value changes
+                    formik.setFieldError('mandalCode', undefined);
                     getVillages(itemValue);
                   }}
                   style={styles.picker}
                 >
-                  <Picker.Item label="---Select---" value="0" />
+                  <Picker.Item label="---Select---" value="" />
                   {mandals.map((m) => (
                     <Picker.Item key={m.mandal_code} label={m.mandal_name} value={m.mandal_code} />
                   ))}
@@ -1018,6 +1047,8 @@ const res = await commonAPICall(
                   selectedValue={formik.values.villageCode}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('villageCode', itemValue);
+                    // Clear the error when value changes
+                    formik.setFieldError('villageCode', undefined);
                   }}
                   style={styles.picker}
                 >
@@ -1041,7 +1072,11 @@ const res = await commonAPICall(
                 ]}
                 placeholder="Enter Location / Landmark"
                 value={formik.values.landmark}
-                onChangeText={formik.handleChange('landmark')}
+                onChangeText={(text) => {
+                  formik.handleChange('landmark')(text);
+                  // Clear the error when value changes
+                  formik.setFieldError('landmark', undefined);
+                }}
                 onBlur={formik.handleBlur('landmark')}
               />
               {formik.touched.landmark && formik.errors.landmark && (
@@ -1096,6 +1131,8 @@ const res = await commonAPICall(
                   selectedValue={formik.values.plantationType}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('plantationType', itemValue);
+                    // Clear the error when value changes
+                    formik.setFieldError('plantationType', undefined);
                     formik.setFieldValue('othersPlantationType', '');
                     formik.setFieldValue('area', '');
                   }}
@@ -1127,7 +1164,11 @@ const res = await commonAPICall(
                   ]}
                   placeholder="Enter other plantation type"
                   value={formik.values.othersPlantationType}
-                  onChangeText={formik.handleChange('othersPlantationType')}
+                  onChangeText={(text) => {
+                    formik.handleChange('othersPlantationType')(text);
+                    // Clear the error when value changes
+                    formik.setFieldError('othersPlantationType', undefined);
+                  }}
                   onBlur={formik.handleBlur('othersPlantationType')}
                 />
                 {formik.touched.othersPlantationType && formik.errors.othersPlantationType && (
@@ -1156,7 +1197,11 @@ const res = await commonAPICall(
                 }
                 keyboardType="numeric"
                 value={formik.values.area}
-                onChangeText={formik.handleChange('area')}
+                onChangeText={(text) => {
+                  formik.handleChange('area')(text);
+                  // Clear the error when value changes
+                  formik.setFieldError('area', undefined);
+                }}
                 onBlur={formik.handleBlur('area')}
               />
               {formik.touched.area && formik.errors.area && (
@@ -1176,6 +1221,8 @@ const res = await commonAPICall(
                     selectedValue={formik.values.scheme}
                     onValueChange={(itemValue) => {
                       formik.setFieldValue('scheme', itemValue);
+                      // Clear the error when value changes
+                      formik.setFieldError('scheme', undefined);
                     }}
                     style={styles.picker}
                   >
@@ -1202,6 +1249,9 @@ const res = await commonAPICall(
                   selectedValue={formik.values.plantSpacing}
                   onValueChange={(itemValue) => {
                     formik.setFieldValue('plantSpacing', itemValue);
+                    // Clear the error when value changes
+                    formik.setFieldError('plantSpacing', undefined);
+                    formik.setFieldValue('otherPlantSpacing', '');
                   }}
                   style={styles.picker}
                 >
@@ -1232,7 +1282,11 @@ const res = await commonAPICall(
                   ]}
                   placeholder="Enter other plant spacing"
                   value={formik.values.otherPlantSpacing}
-                  onChangeText={formik.handleChange('otherPlantSpacing')}
+                  onChangeText={(text) => {
+                    formik.handleChange('otherPlantSpacing')(text);
+                    // Clear the error when value changes
+                    formik.setFieldError('otherPlantSpacing', undefined);
+                  }}
                   onBlur={formik.handleBlur('otherPlantSpacing')}
                 />
                 {formik.touched.otherPlantSpacing && formik.errors.otherPlantSpacing && (
@@ -1280,6 +1334,8 @@ const res = await commonAPICall(
                       selectedValue={formik.values.landType}
                       onValueChange={(itemValue) => {
                         formik.setFieldValue('landType', itemValue);
+                        // Clear the error when value changes
+                        formik.setFieldError('landType', undefined);
                       }}
                       style={styles.picker}
                     >
@@ -1302,7 +1358,11 @@ const res = await commonAPICall(
                     ]}
                     placeholder="Enter incharge name"
                     value={formik.values.inchargeName}
-                    onChangeText={formik.handleChange('inchargeName')}
+                    onChangeText={(text) => {
+                      formik.handleChange('inchargeName')(text);
+                      // Clear the error when value changes
+                      formik.setFieldError('inchargeName', undefined);
+                    }}
                     onBlur={formik.handleBlur('inchargeName')}
                   />
                   {formik.touched.inchargeName && formik.errors.inchargeName && (
@@ -1319,7 +1379,11 @@ const res = await commonAPICall(
                     ]}
                     placeholder="Enter designation"
                     value={formik.values.inchargeDesignation}
-                    onChangeText={formik.handleChange('inchargeDesignation')}
+                    onChangeText={(text) => {
+                      formik.handleChange('inchargeDesignation')(text);
+                      // Clear the error when value changes
+                      formik.setFieldError('inchargeDesignation', undefined);
+                    }}
                     onBlur={formik.handleBlur('inchargeDesignation')}
                   />
                   {formik.touched.inchargeDesignation && formik.errors.inchargeDesignation && (
@@ -1341,6 +1405,8 @@ const res = await commonAPICall(
                     onChangeText={(text) => {
                       const numericText = text.replace(/[^0-9]/g, '');
                       formik.setFieldValue('inchargeMobile', numericText);
+                      // Clear the error when value changes
+                      formik.setFieldError('inchargeMobile', undefined);
                     }}
                     onBlur={formik.handleBlur('inchargeMobile')}
                   />
@@ -1731,6 +1797,23 @@ const styles = StyleSheet.create({
   },
   mt1: {
     marginTop: 8,
+  },
+  kmlContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  viewKMLButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  viewKMLButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 
