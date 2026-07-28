@@ -23,10 +23,13 @@ import {
   commonAPICall,
   CONTEXT_HEADING,
   CREATENEWHARITHANDHRA,
+  FIRE_TRUTHING,
   HARIDISTS,
   HARIMANDALS,
   HARIVILLAGES,
+  RANGES,
   SCHEMES,
+  SECTIONSDIFF,
   VanamahotsavamEntry,
   VANASECTIONS,
 } from '../utils/utils';
@@ -43,6 +46,7 @@ const Vanamahotsav = () => {
   
   
   const [speciesList, setSpeciesList] = useState([]);
+  const [range, setRange] = useState([]);
   const [section, setSection] = useState([]);
   const [scheme, setScheme] = useState([]);
   
@@ -58,10 +62,21 @@ const Vanamahotsav = () => {
 
   const roleId = useSelector((state)=>state.LoginReducer.roleId)
 
-  const locationType = roleId === 6 ? 'forest' : 'nonforest';
+  const username = useSelector((state)=>state.LoginReducer.userId)
+
+  const locationType = (roleId === 6 || roleId === 2)? 'forest' : 'nonforest';
+
+  console.log("roleid",username);
+  
 
   // Validation Schema
   const validationSchema = Yup.object().shape({
+     range: Yup.string()
+    .when(['locationType', 'roleId'], {
+      is: (locationType, roleId) => locationType === 'forest' && roleId === 2,
+      then: (schema) => schema.required('Range is required'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
     section: Yup.string().when('locationType', {
       is: (val) => val === 'forest',
       then: () => Yup.string().required('Section is required'),
@@ -136,15 +151,43 @@ const Vanamahotsav = () => {
     kmlFile: Yup.string().notRequired(),
   });
 
-  // Get Sections
-  const GetSections = async () => {
+
+  const GetRanges= async (e) => {
     try {
-      const response = await commonAPICall(VANASECTIONS, {}, 'get', dispatch);
+      const response = await commonAPICall(RANGES, {}, 'get', dispatch);
       if (response.status === 200) {
+        if(typeof(response.data.RangeData) === "string"){
+            setRange([])
+        } else {
+          setRange(response.data.RangeData);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+    }
+  };
+
+  useEffect(()=>{
+    GetRanges(username)
+  },[])
+
+
+
+
+  // Get Sections
+  const GetSections = async (itemValue) => {
+    console.log("ite",itemValue);
+    
+    try {
+      const endpoint = roleId === 2?SECTIONSDIFF + "range_id=" + itemValue:VANASECTIONS
+      const response = await commonAPICall(endpoint, {}, 'get', dispatch);
+      if (response.status === 200) {
+        console.log("ress",response.data);
+        
         if(typeof(response.data.UserSectionData) === "string"){
             setSection([])
         } else {
-          setSection(response.data.UserSectionData);
+          setSection(response.data.UserSectionData || response.data.SectionData);
         }
       }
     } catch (error) {
@@ -166,7 +209,10 @@ const Vanamahotsav = () => {
 
   useEffect(() => {
     GetSpecies(setSpeciesList, dispatch);
-    GetSections();
+    if(roleId!==2){
+ GetSections();
+    }
+   
     GetSchemes();
     if(roleId!==6){
     formik.setFieldValue("scheme","17")
@@ -289,6 +335,7 @@ const Vanamahotsav = () => {
     initialValues: {
       roleId: roleId,
       locationType: locationType,
+      range:"",
       section: '',
       beat: '',
       compartment: '',
@@ -824,6 +871,9 @@ const Vanamahotsav = () => {
   }
   }
 
+  console.log("range",range);
+  
+
   const getVillages= async(val)=>{
 
     if(val!==""){
@@ -868,6 +918,35 @@ const res = await commonAPICall(
             {/* Forest Fields */}
             {locationType === 'forest' && (
               <>
+              {roleId===2&&(
+ <View style={styles.formGroup}>
+                  <Text style={styles.label}>Range <Text style={styles.star}>*</Text></Text>
+                  <View style={[
+                    styles.pickerContainer,
+                    formik.touched.range && formik.errors.range && styles.inputError
+                  ]}>
+                    <Picker
+                      selectedValue={formik.values.section}
+                      onValueChange={(itemValue) => {
+                        formik.setFieldValue('range', itemValue);
+                        // Clear the error when value changes
+                        formik.setFieldError('range', undefined);
+                        GetSections(itemValue)
+                      }}
+                      style={styles.picker}
+                    >
+                      <Picker.Item label="---select---" value="" />
+                      {range?.map((d) => (
+                        <Picker.Item key={d.froid} label= {d?.froname} value={d.froid} />
+                      ))}
+                    </Picker>
+                  </View>
+                  {formik.touched.range && formik.errors.range && (
+                    <Text style={styles.errorText}>{formik.errors.range}</Text>
+                  )}
+                </View>
+              )}
+              
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Section <Text style={styles.star}>*</Text></Text>
                   <View style={[

@@ -234,6 +234,10 @@ export const VANAMAHOTSAVUPDATE = "api/user/approveVanamahotsavamEntry";
 export const VANASECTIONS = "api/user/sections";
 export const SCHEMES = "api/user/plantationSchemes";
 export const FIRE_TRUTHING = "api/user/";
+export const RANGES = "api/user/getrange";
+export const SECTIONSDIFF = "api/user/getsection?";
+
+
 export const CREATENEWHARITHANDHRA="api/user/harithaAndhra/createHarithaAndhraEntry"
 export const GETHARITHAANDHRADETAILS="api/user/harithaAndhra/getHarithaAndhraEntryDetails"
 
