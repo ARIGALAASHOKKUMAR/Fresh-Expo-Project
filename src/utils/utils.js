@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import { hideLoader, hideMessage, showLoader, showMessage } from "../actions";
 import { Toast } from "react-native-sprinkle-toast";
 
-export const base_url = "https://forests.ap.gov.in/apsawmills";
+export const base_url = "https://swapi.dev.nidhi.apcfss.in/apsawmills";
 export const IMG_UPLOAD_URL =
   "https://api.apfd.apcfss.in/socialwelfaredms/user-defined-path/file-upload/";
 export const IMG_DOWNLOAD_URL =
