@@ -180,7 +180,7 @@ const checkapkversion = async () => {
       CHECKAPKVERSION,
       {
         platform: "Android",
-        appVersion: "1.2.6",
+        appVersion: "1.2.7",
       },
       "post",
       dispatch
