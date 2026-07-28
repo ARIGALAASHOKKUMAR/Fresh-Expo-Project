@@ -12,7 +12,7 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import Icon from '@expo/vector-icons/Ionicons';
 import { commonAPICall, GETHARITHAANDHRADETAILS } from '../utils/utils';
 import moment from 'moment';
@@ -25,6 +25,11 @@ const PlantationReportandEntry = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('add');
+
+    const roleId = useSelector((state)=>state.LoginReducer.roleId)
+
+    const userName = useSelector((state)=>state.LoginReducer.userName)
+
   
   // Image preview states
   const [modalVisible, setModalVisible] = useState(false);
@@ -97,10 +102,11 @@ const PlantationReportandEntry = () => {
 
     // Get in-charge name: if incharge_name is null, show fro_name
     const getInchargeName = () => {
+      
       if (item.incharge_name) {
         return item.incharge_name;
       }
-      return `FRO-${item.fro_name}` || 'N/A';
+      return `${roleId === 2?"DFO":"FRO"}-${userName}` || 'N/A';
     };
 
     return (

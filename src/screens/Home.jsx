@@ -71,12 +71,12 @@ const Vanamahotsav = () => {
 
   // Validation Schema
   const validationSchema = Yup.object().shape({
-     range: Yup.string()
-    .when(['locationType', 'roleId'], {
-      is: (locationType, roleId) => locationType === 'forest' && roleId === 2,
-      then: (schema) => schema.required('Range is required'),
-      otherwise: (schema) => schema.notRequired(),
-    }),
+    range: Yup.string().when(['locationType', 'roleId'], {
+  is: (locationType, roleId) =>
+    locationType === 'forest' || roleId === 2,
+  then: () => Yup.string().required('Range is required'),
+  otherwise: () => Yup.string().notRequired(),
+}),
     section: Yup.string().when('locationType', {
       is: (val) => val === 'forest',
       then: () => Yup.string().required('Section is required'),
@@ -261,6 +261,7 @@ const Vanamahotsav = () => {
 };
     // ---------------- FOREST ----------------
     if (values.locationType === "forest") {
+      payload.rangeId=Number(values.range);
       payload.section = Number(values.section);
       payload.beat = Number(values.beat);
       payload.compartment = Number(values.compartment);
