@@ -231,7 +231,7 @@ useFocusEffect(
   return (
     <View style={styles.screen}>
       <ImageBackground 
-source={require('../../assets/harithalatest.png')}
+source={require('../../assets/correctharitha.png')}
   style={styles.screen}
   contentFit="contain"
 >
