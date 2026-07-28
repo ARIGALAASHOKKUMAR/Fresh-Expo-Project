@@ -28,7 +28,10 @@ const PlantationReportandEntry = () => {
 
     const roleId = useSelector((state)=>state.LoginReducer.roleId)
 
-    const userName = useSelector((state)=>state.LoginReducer.userName)
+    const userName = useSelector((state)=>state.LoginReducer.username)
+
+    console.log("userName",userName);
+    
 
   
   // Image preview states
