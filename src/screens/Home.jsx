@@ -73,7 +73,7 @@ const Vanamahotsav = () => {
   const validationSchema = Yup.object().shape({
     range: Yup.string().when(['locationType', 'roleId'], {
   is: (locationType, roleId) =>
-    locationType === 'forest' || roleId === 2,
+    locationType === 'forest' && roleId === 2,
   then: () => Yup.string().required('Range is required'),
   otherwise: () => Yup.string().notRequired(),
 }),
