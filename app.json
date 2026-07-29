@@ -2,7 +2,7 @@
   "expo": {
     "name": "Mission-Haritha-Andhra",
     "slug": "Mission-Haritha-Andhra",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/512_512logo-512x512.png",
     "userInterfaceStyle": "light",
