@@ -30,7 +30,6 @@ const PlantationReportandEntry = () => {
 
     const userName = useSelector((state)=>state.LoginReducer.username)
 
-    console.log("userName",userName);
     
 
   
@@ -230,6 +229,7 @@ const PlantationReportandEntry = () => {
                 </View>
               }
               showsVerticalScrollIndicator={false}
+              scrollEnabled={false}
             />
           )}
         </View>
@@ -324,6 +324,7 @@ const PlantationReportandEntry = () => {
                 )}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.thumbnailStripContent}
+                scrollEnabled={false}
               />
             </View>
           )}

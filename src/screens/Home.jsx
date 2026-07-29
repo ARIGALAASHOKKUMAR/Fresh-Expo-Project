@@ -66,7 +66,6 @@ const Vanamahotsav = () => {
 
   const locationType = (roleId === 6 || roleId === 2)? 'forest' : 'nonforest';
 
-  console.log("roleid",username);
   
 
   // Validation Schema
@@ -176,13 +175,11 @@ const Vanamahotsav = () => {
 
   // Get Sections
   const GetSections = async (itemValue) => {
-    console.log("ite",itemValue);
     
     try {
       const endpoint = roleId === 2?SECTIONSDIFF + "range_id=" + itemValue:VANASECTIONS
       const response = await commonAPICall(endpoint, {}, 'get', dispatch);
       if (response.status === 200) {
-        console.log("ress",response.data);
         
         if(typeof(response.data.UserSectionData) === "string"){
             setSection([])
@@ -872,7 +869,6 @@ const Vanamahotsav = () => {
   }
   }
 
-  console.log("range",range);
   
 
   const getVillages= async(val)=>{
