@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/512_512logo-512x512.png",
     "userInterfaceStyle": "light",
-    "jsEngine": "hermes",
     "splash": {
       "image": "./assets/image.png",
       "resizeMode": "contain",
