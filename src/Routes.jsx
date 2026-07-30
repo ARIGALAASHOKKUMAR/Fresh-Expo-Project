@@ -27,7 +27,6 @@ export default function Routes() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistedStore}>
-        <ToastProvider>
           <NavigationContainer>
             <ModalPopup />
             <Overlay />
@@ -54,7 +53,6 @@ export default function Routes() {
 
             </Stack.Navigator>
           </NavigationContainer>
-        </ToastProvider>
       </PersistGate>
     </Provider>
   );
