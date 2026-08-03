@@ -108,7 +108,7 @@ const PlantationReportandEntry = () => {
       if (item.incharge_name) {
         return item.incharge_name;
       }
-      return `${roleId === 2?"DFO":"FRO"}-${userName}` || 'N/A';
+
     };
 
     return (
@@ -153,12 +153,15 @@ const PlantationReportandEntry = () => {
         </View>
 
         {/* Row 6: In-charge / FRO Name */}
-        <View style={styles.cardRow}>
+        { getInchargeName()&&(
+<View style={styles.cardRow}>
           <Icon name="person-outline" size={16} color="#2e7d32" />
           <Text style={styles.infoText}>
             Incharge Officer: {getInchargeName()}
           </Text>
         </View>
+        )}
+        
 
         {/* Image thumbnails */}
         <View style={styles.imageContainer}>
