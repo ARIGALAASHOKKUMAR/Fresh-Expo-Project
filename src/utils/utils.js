@@ -7,9 +7,9 @@ import { Toast } from "react-native-sprinkle-toast";
 
 export const base_url = "https://forests.ap.gov.in/apsawmills/";
 export const IMG_UPLOAD_URL =
-  "https://api.apfd.apcfss.in/socialwelfaredms/user-defined-path/file-upload/";
+  "https://swapi.dev.nidhi.apcfss.in/socialwelfaredms/user-defined-path/file-upload/bucket/swdocuments.dev.nidhi.apcfss.in/";
 export const IMG_DOWNLOAD_URL =
-  "https://api.apfd.apcfss.in/socialwelfaredms/user-defined-path/file-download/";
+  "https://swapi.dev.nidhi.apcfss.in/socialwelfaredms/user-defined-path/file-download/bucket/swdocuments.dev.nidhi.apcfss.in/";
 
 const state = store.getState();
 const accessToken = state.LoginReducer.token;
