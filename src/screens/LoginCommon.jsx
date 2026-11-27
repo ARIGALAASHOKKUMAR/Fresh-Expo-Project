@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -15,18 +14,31 @@ import {
   Dimensions,
   ImageBackground,
   Linking,
-  AppState
+  AppState,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { commonAPICall, LOGIN_END_POINT, GENERATE_CAPTCHA, CHECKAPKVERSION } from '../utils/utils';
+import axios from 'axios';
+import {
+  commonAPICall,
+  LOGIN_END_POINT,
+  GENERATE_CAPTCHA,
+  CHECKAPKVERSION,
+  setBaseUrl,
+} from '../utils/utils';
 import { login } from '../actions';
 import { showErrorToast, showSuccessToast } from '../utils/showToast';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
+
+const STATUS_API_URL =
+  'https://swapi.dev.nidhi.apcfss.in/apsawmills/api/open/getHarithaStatus';
+
+const APP_VERSION = '1.2.7';
+const CUSTOM_APK_URL = 'https://forests.ap.gov.in/harithaandhraapk';
 
 const LoginCommon = () => {
   const dispatch = useDispatch();
@@ -35,7 +47,36 @@ const LoginCommon = () => {
   const [captchaImage, setCaptchaImage] = useState('');
   const [storedCaptchaId, setStoredCaptchaId] = useState('');
 
+  const baseUrlReadyRef = useRef(false);
+
   const navigation = useNavigation();
+
+  // ---------------------------------------------------------------------------
+  // Resolve base URL from getHarithaStatus response
+  //   harithaStatus[0].status === true  -> DEV/UAT url
+  //   otherwise                         -> PROD url
+  // ---------------------------------------------------------------------------
+  const resolveBaseUrl = async () => {
+    try {
+      const res = await axios.get(STATUS_API_URL); // no timeout — as requested
+
+      const arr = res?.data?.harithaStatus;
+      const flag =
+        Array.isArray(arr) && arr.length > 0 ? arr[0]?.status === true : false;
+
+      setBaseUrl(!flag);
+
+      console.log('[resolveBaseUrl] harithaStatus.status =>', flag);
+      console.log('[resolveBaseUrl] using base_url =>', flag ? 'DEV' : 'PROD');
+      return flag;
+    } catch (err) {
+      console.log('[resolveBaseUrl] status API failed =>', err?.message);
+      setBaseUrl(true); // fallback to PROD
+      return false;
+    } finally {
+      baseUrlReadyRef.current = true;
+    }
+  };
 
   // Validation Schema
   const validationSchema = Yup.object({
@@ -52,11 +93,7 @@ const LoginCommon = () => {
   });
 
   const formik = useFormik({
-    initialValues: {
-      username: '',
-      password: '',
-      captcha: '',
-    },
+    initialValues: { username: '', password: '', captcha: '' },
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
@@ -66,7 +103,12 @@ const LoginCommon = () => {
   // Generate Captcha
   const generateCaptcha = async () => {
     try {
-      const response = await commonAPICall(GENERATE_CAPTCHA, {}, 'get', dispatch);
+      const response = await commonAPICall(
+        GENERATE_CAPTCHA,
+        {},
+        'get',
+        dispatch
+      );
       setCaptchaImage(response?.data?.captcha || '');
       setStoredCaptchaId(response?.data?.captchaId || '');
     } catch (error) {
@@ -75,15 +117,16 @@ const LoginCommon = () => {
   };
 
   useEffect(() => {
-    generateCaptcha();
+    (async () => {
+      await resolveBaseUrl();
+      generateCaptcha();
+    })();
   }, []);
 
   // Handle Login
   async function handleLogin(values) {
-    // Validate all fields
     const errors = await formik.validateForm();
     if (Object.keys(errors).length > 0) {
-      // Set touched for all fields to show errors
       formik.setTouched({
         username: true,
         password: true,
@@ -95,9 +138,13 @@ const LoginCommon = () => {
     try {
       setLoading(true);
 
+      if (!baseUrlReadyRef.current) {
+        await resolveBaseUrl();
+      }
+
       const payload = {
         username: values.username.trim(),
-        password: btoa(values.password), // Base64 encode password
+        password: btoa(values.password),
         deptCaptcha: values.captcha.trim(),
         storedCaptchaId: storedCaptchaId,
         latitude: null,
@@ -105,7 +152,12 @@ const LoginCommon = () => {
         loginSource: 'mobile',
       };
 
-      const response = await commonAPICall(LOGIN_END_POINT, payload, 'post', dispatch);
+      const response = await commonAPICall(
+        LOGIN_END_POINT,
+        payload,
+        'post',
+        dispatch
+      );
 
       if (response.status === 200) {
         const payload = {
@@ -135,25 +187,27 @@ const LoginCommon = () => {
         dispatch(login(payload));
 
         const currentTime = new Date().getHours();
-        let welcomeMsg = currentTime >= 5 && currentTime < 12
-          ? 'Good morning! Welcome to Haritha Andhra'
-          : currentTime >= 12 && currentTime < 18
+        let welcomeMsg =
+          currentTime >= 5 && currentTime < 12
+            ? 'Good morning! Welcome to Haritha Andhra'
+            : currentTime >= 12 && currentTime < 18
             ? 'Good afternoon! Welcome to Haritha Andhra'
             : 'Good evening! Welcome to Haritha Andhra';
 
         showSuccessToast(welcomeMsg);
         navigation.navigate('HOME');
-      }
-      else{
-         generateCaptcha()
-         formik.setFieldValue("captcha","")
+      } else {
+        generateCaptcha();
+        formik.setFieldValue('captcha', '');
       }
     } catch (error) {
-      generateCaptcha()
+      generateCaptcha();
       if (error.response) {
         setCaptchaImage(error.response?.data?.captcha || '');
         setStoredCaptchaId(error.response?.data?.captchaId || '');
-        showErrorToast(error.response?.data?.message || 'Please enter valid credentials');
+        showErrorToast(
+          error.response?.data?.message || 'Please enter valid credentials'
+        );
       } else {
         showErrorToast(error.message || 'Something went wrong');
       }
@@ -162,334 +216,252 @@ const LoginCommon = () => {
     }
   }
 
-  // Handle Forgot Password
   const handleForgotPassword = () => {
     Alert.alert('Forgot Password', 'Please contact your administrator');
   };
 
-
-
-
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=org.indusaction.dlcap&hl=en_IN";
-const CUSTOM_APK_URL = "https://forests.ap.gov.in/harithaandhraapk";
-
-const checkapkversion = async () => {
-  try {
-    const res = await commonAPICall(
-      CHECKAPKVERSION,
-      {
-        platform: "Android",
-        appVersion: "1.2.7",
-      },
-      "post",
-      dispatch
-    );
-
-    if (res.status === 200 && res.data.updateAvailable) {
-      showUpdateAlert();
-    }
-  } catch (error) {
-    console.log("Version check error:", error);
-  }
-};
-
-const showUpdateAlert = () => {
-  Alert.alert(
-    "Update Available",
-    "A new version of the app is available. Please update to continue using the latest features and improvements.",
-    [
-      {
-        text: "Download APK",
-        onPress: () => Linking.openURL(CUSTOM_APK_URL),
-      },
-    ],
-    {
-      cancelable: false,
-    }
-  );
-};
-
-
-// UpdateChecker.js or AppVersionCheck.js
-
-useFocusEffect(
-  useCallback(() => {
-    checkapkversion();
-
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        checkapkversion();
+  const checkapkversion = async () => {
+    try {
+      if (!baseUrlReadyRef.current) {
+        await resolveBaseUrl();
       }
-    });
 
-    return () => {
-      subscription.remove();
-    };
-  }, [])
-);
+      const res = await commonAPICall(
+        CHECKAPKVERSION,
+        { platform: 'Android', appVersion: APP_VERSION },
+        'post',
+        dispatch
+      );
+
+      if (res.status === 200 && res.data.updateAvailable) {
+        showUpdateAlert();
+      }
+    } catch (error) {
+      console.log('Version check error:', error);
+    }
+  };
+
+  const showUpdateAlert = () => {
+    Alert.alert(
+      'Update Available',
+      'A new version of the app is available. Please update to continue using the latest features and improvements.',
+      [{ text: 'Download APK', onPress: () => Linking.openURL(CUSTOM_APK_URL) }],
+      { cancelable: false }
+    );
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      checkapkversion();
+
+      const subscription = AppState.addEventListener('change', (state) => {
+        if (state === 'active') {
+          resolveBaseUrl().then(() => checkapkversion());
+        }
+      });
+
+      return () => {
+        subscription.remove();
+      };
+    }, [])
+  );
+
   return (
     <View style={styles.screen}>
-      <ImageBackground 
-source={require('../../assets/correctharitha.png')}
-  style={styles.screen}
-  contentFit="contain"
->
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
-
-      <KeyboardAvoidingView
-        style={styles.flexOne}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 20}
+      <ImageBackground
+        source={require('../../assets/correctharitha.png')}
+        style={styles.screen}
+        contentFit="contain"
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+
+        <KeyboardAvoidingView
+          style={styles.flexOne}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 20}
         >
-          {/* Background Decorations */}
-          
-          {/* Card */}
-          <View style={{marginTop:480}}>
-            {/* Logo */}
-            
-
-            {/* Username */}
-            <View style={styles.fieldBlock}>
-              <View style={[
-                styles.inputWrapper,
-                formik.touched.username && formik.errors.username && styles.inputWrapperError
-              ]}>
-                <Ionicons name="person-outline" size={20} color="#64748b" style={styles.leftIcon} />
-                <TextInput
-                  placeholder="Username"
-                  placeholderTextColor="#94a3b8"
-                  style={styles.input}
-                  value={formik.values.username}
-                  onChangeText={formik.handleChange('username')}
-                  onBlur={formik.handleBlur('username')}
-                  maxLength={18}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                />
-              </View>
-              {formik.touched.username && formik.errors.username && (
-                <Text style={styles.errorText}>{formik.errors.username}</Text>
-              )}
-            </View>
-
-            {/* Password */}
-            <View style={styles.fieldBlock}>
-              <View style={[
-                styles.inputWrapper,
-                formik.touched.password && formik.errors.password && styles.inputWrapperError
-              ]}>
-                <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.leftIcon} />
-                <TextInput
-                  placeholder="Password"
-                  placeholderTextColor="#94a3b8"
-                  style={styles.input}
-                  value={formik.values.password}
-                  onChangeText={formik.handleChange('password')}
-                  onBlur={formik.handleBlur('password')}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeButton}
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={{ marginTop: 480 }}>
+              {/* Username */}
+              <View style={styles.fieldBlock}>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    formik.touched.username &&
+                      formik.errors.username &&
+                      styles.inputWrapperError,
+                  ]}
                 >
                   <Ionicons
-                    name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                    size={22}
+                    name="person-outline"
+                    size={20}
                     color="#64748b"
+                    style={styles.leftIcon}
                   />
-                </TouchableOpacity>
-              </View>
-              {formik.touched.password && formik.errors.password && (
-                <Text style={styles.errorText}>{formik.errors.password}</Text>
-              )}
-            </View>
-
-            {/* Captcha */}
-            <View style={styles.fieldBlock}>
-              <View style={styles.captchaRow}>
-                <View style={[
-                  styles.captchaInputWrapper,
-                  formik.touched.captcha && formik.errors.captcha && styles.inputWrapperError
-                ]}>
                   <TextInput
-                    placeholder="Enter Captcha"
+                    placeholder="Username"
                     placeholderTextColor="#94a3b8"
                     style={styles.input}
-                    value={formik.values.captcha}
-                    onChangeText={formik.handleChange('captcha')}
-                    onBlur={formik.handleBlur('captcha')}
-                    keyboardType="number-pad"
-                    maxLength={6}
+                    value={formik.values.username}
+                    onChangeText={formik.handleChange('username')}
+                    onBlur={formik.handleBlur('username')}
+                    maxLength={18}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="next"
                   />
                 </View>
-
-                <View style={styles.captchaBox}>
-                  {captchaImage ? (
-                    <Image
-                      source={{ uri: captchaImage }}
-                      style={styles.captchaImage}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <Text style={styles.captchaPlaceholderText}>Captcha</Text>
-                  )}
-                </View>
-
-                <TouchableOpacity
-                  onPress={generateCaptcha}
-                  style={styles.refreshBtn}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="refresh-circle" size={34} color="green" />
-                </TouchableOpacity>
+                {formik.touched.username && formik.errors.username && (
+                  <Text style={styles.errorText}>{formik.errors.username}</Text>
+                )}
               </View>
-              {formik.touched.captcha && formik.errors.captcha && (
-                <Text style={styles.errorText}>{formik.errors.captcha}</Text>
-              )}
+
+              {/* Password */}
+              <View style={styles.fieldBlock}>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    formik.touched.password &&
+                      formik.errors.password &&
+                      styles.inputWrapperError,
+                  ]}
+                >
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={20}
+                    color="#64748b"
+                    style={styles.leftIcon}
+                  />
+                  <TextInput
+                    placeholder="Password"
+                    placeholderTextColor="#94a3b8"
+                    style={styles.input}
+                    value={formik.values.password}
+                    onChangeText={formik.handleChange('password')}
+                    onBlur={formik.handleBlur('password')}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="done"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.eyeButton}
+                  >
+                    <Ionicons
+                      name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                      size={22}
+                      color="#64748b"
+                    />
+                  </TouchableOpacity>
+                </View>
+                {formik.touched.password && formik.errors.password && (
+                  <Text style={styles.errorText}>{formik.errors.password}</Text>
+                )}
+              </View>
+
+              {/* Captcha */}
+              <View style={styles.fieldBlock}>
+                <View style={styles.captchaRow}>
+                  <View
+                    style={[
+                      styles.captchaInputWrapper,
+                      formik.touched.captcha &&
+                        formik.errors.captcha &&
+                        styles.inputWrapperError,
+                    ]}
+                  >
+                    <TextInput
+                      placeholder="Enter Captcha"
+                      placeholderTextColor="#94a3b8"
+                      style={styles.input}
+                      value={formik.values.captcha}
+                      onChangeText={formik.handleChange('captcha')}
+                      onBlur={formik.handleBlur('captcha')}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                    />
+                  </View>
+
+                  <View style={styles.captchaBox}>
+                    {captchaImage ? (
+                      <Image
+                        source={{ uri: captchaImage }}
+                        style={styles.captchaImage}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Text style={styles.captchaPlaceholderText}>Captcha</Text>
+                    )}
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={generateCaptcha}
+                    style={styles.refreshBtn}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="refresh-circle" size={34} color="green" />
+                  </TouchableOpacity>
+                </View>
+                {formik.touched.captcha && formik.errors.captcha && (
+                  <Text style={styles.errorText}>{formik.errors.captcha}</Text>
+                )}
+              </View>
+
+              {/* Login Button */}
+              <TouchableOpacity
+                style={[
+                  styles.loginButton,
+                  loading && styles.loginButtonDisabled,
+                ]}
+                onPress={formik.handleSubmit}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.loginText}>SIGN IN</Text>
+                <Ionicons
+                  name="arrow-forward"
+                  size={22}
+                  color="#fff"
+                  style={{ marginLeft: 10 }}
+                />
+              </TouchableOpacity>
             </View>
 
-            {/* Forgot Password */}
-            {/* <TouchableOpacity
-              style={styles.forgotPasswordContainer}
-              onPress={handleForgotPassword}
+            <Text
+              style={{
+                marginTop: 20,
+                textAlign: 'center',
+                color: 'green',
+                fontWeight: 'bold',
+              }}
             >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity> */}
-
-            {/* Login Button */}
-            <TouchableOpacity
-              style={[
-                styles.loginButton,
-                loading && styles.loginButtonDisabled
-              ]}
-              onPress={formik.handleSubmit}
-              disabled={loading}
-              activeOpacity={0.85}
+              Andhra Pradesh Forest Department
+            </Text>
+            <Text
+              style={{ textAlign: 'center', color: 'green', fontWeight: 'bold' }}
             >
-
-              
-                  <Text style={styles.loginText}>SIGN IN</Text>
-                  <Ionicons name="arrow-forward" size={22} color="#fff" style={{ marginLeft: 10 }} />
-            </TouchableOpacity>
-          </View>
-                            <Text style={{marginTop:20,textAlign:"center",color:"green",fontWeight:"bold"}}>Andhra Pradesh Forest Department</Text>
-                            <Text style={{textAlign:"center",color:"green",fontWeight:"bold"}}>v 1.0.1</Text>
-
-        </ScrollView>
-
-      </KeyboardAvoidingView>
+              v 1.0.1
+            </Text>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </ImageBackground>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-  },
-  flexOne: {
-    flex: 1,
-  },
+  screen: { flex: 1, backgroundColor: '#0f172a' },
+  flexOne: { flex: 1 },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
     paddingVertical: 30,
-  },
-  glowOrb1: {
-    position: 'absolute',
-    top: -100,
-    right: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(59, 130, 246, 0.12)',
-  },
-  glowOrb2: {
-    position: 'absolute',
-    bottom: -80,
-    left: -80,
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    backgroundColor: 'rgba(59, 130, 246, 0.08)',
-  },
-  glowOrb3: {
-    position: 'absolute',
-    top: '40%',
-    right: -50,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(99, 102, 241, 0.06)',
-  },
-  card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 36,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.25,
-    shadowRadius: 40,
-    elevation: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  logoCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#3b82f6',
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  welcomeText: {
-    fontSize: 15,
-    color: '#64748b',
-    textAlign: 'center',
-    marginBottom: 2,
-    fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-  titleText: {
-    fontSize: 30,
-    fontWeight: '800',
-    color: '#0f172a',
-    textAlign: 'center',
-    marginBottom: 6,
-    letterSpacing: 0.5,
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginBottom: 28,
-    letterSpacing: 0.3,
-  },
-  fieldBlock: {
-    marginBottom: 8,
   },
   inputWrapper: {
     minHeight: 34,
@@ -516,9 +488,7 @@ const styles = StyleSheet.create({
     borderColor: '#ef4444',
     backgroundColor: '#fef2f2',
   },
-  leftIcon: {
-    marginRight: 12,
-  },
+  leftIcon: { marginRight: 12 },
   input: {
     flex: 1,
     color: '#0f172a',
@@ -526,15 +496,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontWeight: '500',
   },
-  eyeButton: {
-    paddingLeft: 10,
-    paddingVertical: 6,
-  },
-  captchaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
+  eyeButton: { paddingLeft: 10, paddingVertical: 6 },
+  captchaRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   captchaBox: {
     flex: 1,
     minHeight: 54,
@@ -546,15 +509,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
   },
-  captchaImage: {
-    width: '100%',
-    height: 42,
-  },
-  captchaPlaceholderText: {
-    color: '#94a3b8',
-    fontWeight: '600',
-    fontSize: 13,
-  },
+  captchaImage: { width: '100%', height: 42 },
+  captchaPlaceholderText: { color: '#94a3b8', fontWeight: '600', fontSize: 13 },
   refreshBtn: {
     width: 54,
     height: 54,
@@ -564,17 +520,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#e2e8f0',
-  },
-  forgotPasswordContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 24,
-    paddingVertical: 4,
-  },
-  forgotPasswordText: {
-    color: '#3b82f6',
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.3,
   },
   loginButton: {
     width: '100%',
@@ -590,10 +535,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
-  loginButtonDisabled: {
-    opacity: 0.7,
-    backgroundColor: '#94a3b8',
-  },
+  loginButtonDisabled: { opacity: 0.7, backgroundColor: '#94a3b8' },
   loginText: {
     color: '#fff',
     fontSize: 17,
