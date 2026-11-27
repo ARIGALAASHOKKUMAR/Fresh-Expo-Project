@@ -5,27 +5,43 @@ import { useDispatch } from "react-redux";
 import { hideLoader, hideMessage, showLoader, showMessage } from "../actions";
 import { Toast } from "react-native-sprinkle-toast";
 
-export const base_url = "https://forests.ap.gov.in/apsawmills/";
+// ---------------------------------------------------------------------------
+// Base URLs — both environments exported so screens can switch at runtime
+// ---------------------------------------------------------------------------
+export const PROD_BASE_URL = "https://forests.ap.gov.in/apsawmills/";
+export const UAT_BASE_URL = "https://swapi.dev.nidhi.apcfss.in/apsawmills/";
 
+// Default base_url (kept for backward compatibility — anything that imports
+// `base_url` directly still gets PROD by default).
+// NOTE: The *actual* URL used by myAxios / myAxiosLogin is whatever is set on
+// `myAxios.defaults.baseURL` / `myAxiosLogin.defaults.baseURL` at runtime.
+export const base_url = PROD_BASE_URL;
 
+export const IMG_UPLOAD_URL =
+  "https://api.apfd.apcfss.in/socialwelfaredms/user-defined-path/file-upload/bucket/documents.socialwlfare.apcfss.in/";
+export const IMG_DOWNLOAD_URL =
+  "https://api.apfd.apcfss.in/socialwelfaredms/user-defined-path/file-download/bucket/documents.socialwlfare.apcfss.in/";
 
- export const IMG_UPLOAD_URL = "https://api.apfd.apcfss.in/socialwelfaredms/user-defined-path/file-upload/bucket/documents.socialwlfare.apcfss.in/"
-export const IMG_DOWNLOAD_URL = "https://api.apfd.apcfss.in/socialwelfaredms/user-defined-path/file-download/bucket/documents.socialwlfare.apcfss.in/"
 const state = store.getState();
 const accessToken = state.LoginReducer.token;
 
+// ---------------------------------------------------------------------------
+// Axios instances — NO static baseURL here.
+// The baseURL is set at runtime (e.g. from LoginCommon → resolveBaseUrl())
+// via: myAxios.defaults.baseURL = chosenUrl;
+// ---------------------------------------------------------------------------
 export const myAxios = axios.create({
-  baseURL: base_url,
   headers: {
     // Authorization: accessToken ? `Bearer ${accessToken}` : "",
   },
 });
 
 export const myAxiosLogin = axios.create({
-  baseURL: base_url,
   headers: {},
 });
 
+// Auth interceptor — DO NOT set config.baseURL here, otherwise it will
+// override whatever runtime value was assigned to defaults.baseURL.
 myAxios.interceptors.request.use(
   (config) => {
     const state = store.getState();
@@ -33,12 +49,11 @@ myAxios.interceptors.request.use(
     if (accessToken) {
       config.headers["Authorization"] = `Bearer ${accessToken}`;
     }
-
     return config;
   },
   (error) => {
     return Promise.reject(error);
-  },
+  }
 );
 
 const getCurrentTimestamp = () => {
@@ -161,19 +176,16 @@ export const GETDISTSAPP = "/api/user/v1/districts";
 export const GETMANDALSAPP = "/api/user/v1/mandals?distCode=";
 export const GETVILLAGESAPP = "/api/user/v1/villages";
 export const DIGITALLABOURCHOWKDETAILS =
-  
   "/api/user/digitalLabourChowkRegDetails";
 export const EMPLOYERJOBPOST =
-  
   "/api/user/digital-labour-chowk/createJobPosting";
-export const JOBSEARCH = "/api/user/digitalLabourChowkJobPostings/search";
+export const JOBSEARCH = "api/user/digitalLabourChowkJobPostings/search";
 export const JOBAPPLY = "/api/user/digital-labour-chowk/applyJob";
 export const FINDWORKER = "/api/user/digitalLabourChowkRegDetails";
 export const MYJOBSOFWORKER = "/api/user/digitalLabourChowkJobPostings";
 export const GEOTAGGINGPOST = "/api/user/createGeoTagging";
 export const GEOTAGGINGGET = "/api/user/geo-tagging-details";
 export const FRSREGISTRATION = "/api/user/createEmployeeRegistration";
-
 
 // worker reg api
 
@@ -191,39 +203,38 @@ export const AADHAAR_OTP = "api/open/generateOtp";
 export const GET_STATES_API = "/api/open/states";
 export const CASTE_API = "api/worker/api/open/castesubcaste";
 export const BANK_DETAILS = "/api/worker/api/open/rbibanks";
-export const GET_DISTRICT_REPORT = "api/open/listofdistricts"
+export const GET_DISTRICT_REPORT = "api/open/listofdistricts";
 export const GET_VILLAGESs = "/api/open/new-villages";
 export const WORKER_REG_API = "/api/worker/worker-registration";
 export const PAYMENT_API = "/api/open/create-payment";
 
-export const TicketBookingDetails = "api/user/spotbookingdetails"
-export const TicketBookingEntryDetails = "api/user/ticketbookingdetails"
-export const REPRINT = "api/user/ticketPrintDetails?"
+export const TicketBookingDetails = "api/user/spotbookingdetails";
+export const TicketBookingEntryDetails = "api/user/ticketbookingdetails";
+export const REPRINT = "api/user/ticketPrintDetails?";
 
+export const GENERATEQRSAMPLE = "api/user/generateSampleQrStock?noOfQrs=20";
+export const ASSIGNDUTYTEAMLEADER = "api/user/assignDutyToTeamLeader";
+export const COLLECTSAMPLEANDSENDTOLAB = "api/user/collectSampleAndSendToLab";
+export const MARINEDISCHARGEDETAILS = "api/user/marine-discharge-posting-details";
+export const UPDATEASSIGNDUTY = "api/user/updateAssignedDuty";
 
-export const GENERATEQRSAMPLE = "api/user/generateSampleQrStock?noOfQrs=20"
-export const ASSIGNDUTYTEAMLEADER = "api/user/assignDutyToTeamLeader"
-export const COLLECTSAMPLEANDSENDTOLAB = "api/user/collectSampleAndSendToLab"
-export const MARINEDISCHARGEDETAILS = "api/user/marine-discharge-posting-details"
-export const UPDATEASSIGNDUTY = "api/user/updateAssignedDuty"
+export const GENERATEQRCODES = "/api/user/generateSampleQrStock";
+export const CREATEMARINEDISCHARGEPOSTING =
+  "api/user/createMarineDischargePosting";
 
-export const GENERATEQRCODES = "/api/user/generateSampleQrStock"
-export const CREATEMARINEDISCHARGEPOSTING = "api/user/createMarineDischargePosting"
+export const ASSIGNDISCHARGEDUTY = "api/user/assignDischargeDutyToTeamLeader";
+export const EDITAPPROVALACTION = "api/user/startReadingEditRequestApprovalAction";
 
-export const ASSIGNDISCHARGEDUTY = "api/user/assignDischargeDutyToTeamLeader"
-export const EDITAPPROVALACTION = "api/user/startReadingEditRequestApprovalAction"
+export const COMPLETEDISCHARGE = "api/user/completeDischarge";
+export const STARTDISCHARGE = "api/user/startDischarge";
+export const STARTREADINGEDITREQUEST = "api/user/raiseStartReadingEditRequest";
 
-export const COMPLETEDISCHARGE = "api/user/completeDischarge"
-export const STARTDISCHARGE = "api/user/startDischarge"
-export const STARTREADINGEDITREQUEST = "api/user/raiseStartReadingEditRequest"
+export const UPLOADANALYSISREPORT = "api/user/uploadAnalysisReport";
 
+export const VALIDATEQRINLAB = "api/user/validateSampleQr?qrCode=";
 
-export const UPLOADANALYSISREPORT = "api/user/uploadAnalysisReport"
-
-export const VALIDATEQRINLAB = "api/user/validateSampleQr?qrCode="
-
-export const APPROVEREJECTSEE = "api/user/startReadingEditRequestApprovalAction"
-export const GUARDPONDSGET="api/user/guard-pond-details"
+export const APPROVEREJECTSEE = "api/user/startReadingEditRequestApprovalAction";
+export const GUARDPONDSGET = "api/user/guard-pond-details";
 export const NEWMANDALS = "api/open/regions?";
 export const NEWVILLAGES = "api/open/villages?";
 export const VanamahotsavamEntry = "api/user/createVanamahotsavamEntry";
@@ -237,12 +248,13 @@ export const FIRE_TRUTHING = "api/user/";
 export const RANGES = "api/user/getrange";
 export const SECTIONSDIFF = "api/user/getsection?";
 
+export const CREATENEWHARITHANDHRA =
+  "api/user/harithaAndhra/createHarithaAndhraEntry";
+export const GETHARITHAANDHRADETAILS =
+  "api/user/harithaAndhra/getHarithaAndhraEntryDetails";
 
-export const CREATENEWHARITHANDHRA="api/user/harithaAndhra/createHarithaAndhraEntry"
-export const GETHARITHAANDHRADETAILS="api/user/harithaAndhra/getHarithaAndhraEntryDetails"
+export const CHECKAPKVERSION = "api/open/checkAppVersion";
 
-export const CHECKAPKVERSION="api/open/checkAppVersion"
-
-export const HARIDISTS = "api/user/v1/districts"
-export const HARIMANDALS = "api/user/v1/mandals?distCode="
-export const HARIVILLAGES = "api/user/v1/villages"
+export const HARIDISTS = "api/user/v1/districts";
+export const HARIMANDALS = "api/user/v1/mandals?distCode=";
+export const HARIVILLAGES = "api/user/v1/villages";

@@ -23,10 +23,13 @@ import * as Yup from 'yup';
 import axios from 'axios';
 import {
   commonAPICall,
+  myAxios,
+  myAxiosLogin,
   LOGIN_END_POINT,
   GENERATE_CAPTCHA,
   CHECKAPKVERSION,
-  setBaseUrl,
+  PROD_BASE_URL,
+  UAT_BASE_URL,
 } from '../utils/utils';
 import { login } from '../actions';
 import { showErrorToast, showSuccessToast } from '../utils/showToast';
@@ -52,26 +55,36 @@ const LoginCommon = () => {
   const navigation = useNavigation();
 
   // ---------------------------------------------------------------------------
-  // Resolve base URL from getHarithaStatus response
+  // Resolve base URL from getHarithaStatus response.
+  // Writes the chosen URL directly onto the shared axios instances —
+  // no setBaseUrl import needed.
+  //
   //   harithaStatus[0].status === true  -> DEV/UAT url
   //   otherwise                         -> PROD url
   // ---------------------------------------------------------------------------
   const resolveBaseUrl = async () => {
     try {
-      const res = await axios.get(STATUS_API_URL); // no timeout — as requested
+      const res = await axios.get(STATUS_API_URL);
 
       const arr = res?.data?.harithaStatus;
       const flag =
         Array.isArray(arr) && arr.length > 0 ? arr[0]?.status === true : false;
 
-      setBaseUrl(!flag);
+      const chosen = flag ? UAT_BASE_URL : PROD_BASE_URL;
+
+      // 👇 apply it directly to the shared axios instances
+      myAxios.defaults.baseURL = chosen;
+      myAxiosLogin.defaults.baseURL = chosen;
 
       console.log('[resolveBaseUrl] harithaStatus.status =>', flag);
-      console.log('[resolveBaseUrl] using base_url =>', flag ? 'DEV' : 'PROD');
+      console.log('[resolveBaseUrl] using base_url =>', chosen);
       return flag;
     } catch (err) {
       console.log('[resolveBaseUrl] status API failed =>', err?.message);
-      setBaseUrl(true); // fallback to PROD
+
+      // fallback to PROD
+      myAxios.defaults.baseURL = PROD_BASE_URL;
+      myAxiosLogin.defaults.baseURL = PROD_BASE_URL;
       return false;
     } finally {
       baseUrlReadyRef.current = true;
