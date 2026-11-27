@@ -13,13 +13,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ap.forests.missionharithaandhra",
+      "bundleIdentifier": "forests.ap.missionharithaandhra",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "ap.forests.missionharithaandhra",
+      "package": "forests.ap.missionharithaandhra",
       "adaptiveIcon": {
         "foregroundImage": "./assets/512_512logo-512x512.png",
         "backgroundColor": "#E6F4FE",
